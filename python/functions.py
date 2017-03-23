@@ -3,6 +3,7 @@ import numpy as np
 from numpy import pi,cos,zeros
 from matplotlib import pyplot as plt
 from scipy.io import wavfile
+from scipy.fftpack import fft,ifft
 
 ########## Interfacing .wav files ##############################################
 def wavread(filename):
@@ -21,6 +22,11 @@ def stereo2mono(stereo_left,stereo_right):
 	return ((stereo_left + stereo_right)/2)
 
 ########## Plot functions ######################################################
+def plot(signal):
+	plt.figure()
+	plt.plot(signal)
+	plt.show()
+
 def spectrogram(signaal,fs):
 	plt.figure()
 	plt.specgram(signaal,NFFT=1024,Fs=fs,noverlap=512)
@@ -41,7 +47,7 @@ def coswav(f,fs,duur):
 	return cos(np.arange(0,lengte*stap,stap))
 
 ########## Filters #############################################################
-def hamming_window(numberOfSamples):
+def hammingWindow(numberOfSamples):
 	filter = zeros(numberOfSamples)
 	for i in range(0,numberOfSamples):
 		filter[i] = 0.54-0.46*cos((2*pi*i)/(numberOfSamples-1))
