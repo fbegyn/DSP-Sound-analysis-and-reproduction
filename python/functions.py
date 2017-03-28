@@ -3,7 +3,7 @@ import numpy as np
 from numpy import pi,cos,zeros
 from matplotlib import pyplot as plt
 from scipy.io import wavfile
-from scipy.fftpack import fft,ifft
+from scipy.fftpack import fft,ifft,fftshift,fftfreq
 
 ########## Interfacing .wav files ##############################################
 def wavread(filename):
@@ -21,16 +21,9 @@ def wavwrite(filename,fs,signaal):
 def stereo2mono(stereo_left,stereo_right):
 	return ((stereo_left + stereo_right)/2)
 
-########## Plot functions ######################################################
-def plot(signal):
-	plt.figure()
-	plt.plot(signal)
-	plt.show()
-
-def spectrogram(signaal,fs):
-	plt.figure()
-	plt.specgram(signaal,NFFT=1024,Fs=fs,noverlap=512)
-	plt.show()
+def getSample(fs,sound, start,duration):
+	# start and endPoint in seconds
+	return sound[int(round(start*fs)):int(round((start+duration)*fs))]
 
 ########## Signal generation methodes ##########################################
 def pulse(numberOfSamples,amplitude):
@@ -45,6 +38,26 @@ def coswav(f,fs,duur):
 	lengte=fs*duur
 	stap=2*pi*f/fs
 	return cos(np.arange(0,lengte*stap,stap))
+
+########## Plot functions ######################################################
+def plot(signal):
+	plt.figure()
+	plt.plot(signal)
+	plt.show()
+
+def plotFFT(signal,fs):
+    # Shift the right part of the fft to the left, so it will plot correctly
+    dataY=fftshift(np.abs(fft(signal)))
+    dataX=fftshift(fftfreq(len(signal),1./fs))
+    plt.figure()
+    plt.plot(dataX,dataY)
+    plt.grid()
+    plt.show()
+
+def spectrogram(signaal,fs):
+	plt.figure()
+	plt.specgram(signaal,NFFT=1024,Fs=fs,noverlap=512)
+	plt.show()
 
 ########## Filters #############################################################
 def hammingWindow(numberOfSamples):
