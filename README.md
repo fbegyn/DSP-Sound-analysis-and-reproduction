@@ -20,13 +20,13 @@ School project aiming towards sound decoding and reproduction in python.
 
 ## Begeleiding & Timing
 29 maart: een 2e geluid kiezen naar keuze en doormailen (p.devos@ugent.be)
+19 april: begeleiding
 3 mei: begeleiding
 10 mei: begeleiding
-19 april: begeleiding
 24 mei: code ingeven met commentaar (dient als verslag)
 Eigen geluid kiezen tegen volgende week, 29 maart (per mail p.devos@ugent.be)  
 
 ## Research
-
 * https://www.microsoft.com/en-us/research/wp-content/uploads/2016/07/ParametricWaveField.pdf
-*
+* http://www.img.lx.it.pt/pcs2007/presentations/JurgenHere_Sound_Images.pdf
+* http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.2415&rep=rep1&type=pdf Vnf pagina 18
