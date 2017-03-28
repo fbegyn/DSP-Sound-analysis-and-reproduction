@@ -1,6 +1,6 @@
 # Imports for functions
 import numpy as np
-from numpy import pi,cos,zeros
+from numpy import pi,cos
 from matplotlib import pyplot as plt
 from scipy.io import wavfile
 from scipy.fftpack import fft,ifft,fftshift,fftfreq
@@ -27,7 +27,7 @@ def getSample(fs,sound, start,duration):
 
 ########## Signal generation methodes ##########################################
 def pulse(numberOfSamples,amplitude):
-	dirac=zeros(numberOfSamples)
+	dirac=np.zeros(numberOfSamples)
 	dirac[numberOfSamples/2]=amplitude
 	return dirac
 
@@ -47,6 +47,7 @@ def plot(signal):
 
 def plotFFT(signal,fs):
     # Shift the right part of the fft to the left, so it will plot correctly
+	# and rescale the X-axis
     dataY=fftshift(np.abs(fft(signal)))
     dataX=fftshift(fftfreq(len(signal),1./fs))
     plt.figure()
@@ -61,7 +62,7 @@ def spectrogram(signaal,fs):
 
 ########## Filters #############################################################
 def hammingWindow(numberOfSamples):
-	filter = zeros(numberOfSamples)
+	filter = np.zeros(numberOfSamples)
 	for i in range(0,numberOfSamples):
 		filter[i] = 0.54-0.46*cos((2*pi*i)/(numberOfSamples-1))
 	return filter
