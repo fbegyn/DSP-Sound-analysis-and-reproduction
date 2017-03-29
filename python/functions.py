@@ -51,7 +51,7 @@ def plotFFT(signal,fs):
     dataY=fftshift(np.abs(fft(signal)))
     dataX=fftshift(fftfreq(len(signal),1./fs))
     plt.figure()
-    plt.plot(dataX,dataY)
+    plot=plt.plot(dataX,dataY)
     plt.grid()
     plt.show()
 

@@ -1,6 +1,6 @@
 from functions import *
 
-
+from scipy.signal import argrelmax
 
 ########## Input of sample #####################################################
 fs,sound = wavread("sampleSounds/galop02.wav") # Input stereo file
@@ -25,9 +25,18 @@ spectrogram(sound,fs)
 ### Test the plotFFT functions
 #fs=800
 #signal=coswav(100,fs,.5)
+#plot(abs(fft(signal)))
 #plotFFT(signal,fs)
 
 ### 20ms samples
-soundSample=getSample(fs,sound,0.58,0.02) # 20 ms
+soundSample=getSample(fs,sound,0.68,0.05)
+#soundSample=getSample(fs,sound,0.58,0.02) # 20 ms
+spectrogram(soundSample,fs)
 plotFFT(soundSample,fs)
-#spectrogram(soundSample,fs)
+
+### Try get the frequencies out of it
+soundSample_f=abs(fft(soundSample))
+soundSample_f[soundSample_f<70000]=0 #Remove noise
+plotFFT(ifft(soundSample_f),fs)
+index=argrelmax(soundSample_f[:len(soundSample_f)/2])
+print(index)
