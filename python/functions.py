@@ -1,11 +1,12 @@
-# Imports for functions
 import numpy as np
 from numpy import pi,cos
 from matplotlib import pyplot as plt
 from scipy.io import wavfile
 from scipy.fftpack import fft,ifft,fftshift,fftfreq
 
-########## Interfacing .wav files ##############################################
+###############################################################################
+#                          Interfacing .wav files                             #
+###############################################################################
 def wavread(filename):
 	# Return values:
 	# First element equals the sample rate
@@ -17,15 +18,23 @@ def wavwrite(filename,fs,signaal):
 	normalized=np.int16(signaal/max(np.fabs(signaal))*32767)
 	wavfile.write(filename,fs,normalized)
 
-########## Signal processing ###################################################
+
+
+###############################################################################
+#                            Signal processing                                #
+###############################################################################
 def stereo2mono(stereo_left,stereo_right):
 	return ((stereo_left + stereo_right)/2)
 
 def getSample(fs,sound, start,duration):
-	# start and endPoint in seconds
+	# start and duration in seconds
 	return sound[int(round(start*fs)):int(round((start+duration)*fs))]
 
-########## Signal generation methodes ##########################################
+
+
+###############################################################################
+#                        Signal generation methodes                           #
+###############################################################################
 def pulse(numberOfSamples,amplitude):
 	dirac=np.zeros(numberOfSamples)
 	dirac[numberOfSamples/2]=amplitude
@@ -39,7 +48,9 @@ def coswav(f,fs,duur):
 	stap=2*pi*f/fs
 	return cos(np.arange(0,lengte*stap,stap))
 
-########## Plot functions ######################################################
+###############################################################################
+#                         Plot and print functions                            #
+###############################################################################
 def plot(signal):
 	plt.figure()
 	plt.plot(signal)
@@ -48,7 +59,7 @@ def plot(signal):
 def plotFFT(signal,fs):
     # Shift the right part of the fft to the left, so it will plot correctly
 	# and rescale the X-axis
-    dataY=fftshift(np.abs(fft(signal)))
+    dataY=np.abs(fftshift(fft(signal)))
     dataX=fftshift(fftfreq(len(signal),1./fs))
     plt.figure()
     plot=plt.plot(dataX,dataY)
@@ -59,8 +70,9 @@ def spectrogram(signaal,fs):
 	plt.figure()
 	plt.specgram(signaal,NFFT=1024,Fs=fs,noverlap=512)
 	plt.show()
-
-########## Filters #############################################################
+###############################################################################
+#                                 Filters                                     #
+###############################################################################
 def hammingWindow(numberOfSamples):
 	filter = np.zeros(numberOfSamples)
 	for i in range(0,numberOfSamples):
