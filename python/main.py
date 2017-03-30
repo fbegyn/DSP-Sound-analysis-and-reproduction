@@ -35,25 +35,25 @@ plotFFT(ifft(sample_f),fs)
 
 ##### Find the remaining frequencies and store them in an array
 index=argrelmax(sample_f[:len(sample_f)/2]) # Index of the array
-#Convert index to frequencies
+#Convert index to frequencies with there amplitude
 frequencies=[]
+amplitudes=[]
 for i in np.nditer(index):
-    frequency=i*fs*(1./len(sample_f))
-    frequencies.append(i*fs*(1./len(sample_f)))
-print(frequencies)
+    # Get the frequency and amplitude out of FFT
+    frequencies.append(i * fs*(1./len(sample_f))) # scaling factor: fs/N
+    amplitudes.append(sample_f[i])
 
 
 
 ###############################################################################
-#          Create a (high quality sound from the stored frequencies           #
+#          Create a (high) quality sound from the stored frequencies          #
 ###############################################################################
-fs2 = 48000 # High quality sound with sample rate of 48000Hz
-duration = len(sample)*(1./fs) # Duration of the original sample sound
+fs2 = 44100 # High quality sound with sample rate of 48000Hz
+duration = len(sample)*(1./fs) # Duration of the original sample sound, in sec
 
-namaak = np.zeros(duration*fs2) # Create the sound length
-for frequency in frequencies:
-    print(frequency)
-    namaak = namaak + coswav(frequency,fs2,duration)
+namaak = np.zeros(int(duration*fs2)) # Create the sound length
+for index in range(len(frequencies)):
+    namaak = namaak + amplitudes[index]*coswav(frequencies[index],fs2,duration)
 plotFFT(namaak,fs2)
 wavwrite("testOutputs/namaak.wav",fs,namaak.astype(np.uint16))
 
