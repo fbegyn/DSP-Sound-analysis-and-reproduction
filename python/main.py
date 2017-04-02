@@ -29,7 +29,7 @@ plotFFT(sample,fs)
 ###############################################################################
 ##### Convert to frequencie domain, nomalize and remove noise
 sample_f = abs(fft(sample))
-sample_f = sample_f/np.ndarray.max(sample_f) # Normalize between 0 and 1
+sample_f /= np.ndarray.max(sample_f) # Normalize between 0 and 1
 sample_f[sample_f<.3]=0 # Remove noise under threshold
 plotFFT(ifft(sample_f),fs)
 
@@ -53,7 +53,7 @@ duration = len(sample)*(1./fs) # Duration of the original sample sound, in sec
 
 namaak = np.zeros(int(duration*fs2)) # Create the sound length
 for index in range(len(frequencies)):
-    namaak = namaak + amplitudes[index]*coswav(frequencies[index],fs2,duration)
+    namaak += amplitudes[index]*coswav(frequencies[index],fs2,duration)
 plotFFT(namaak,fs2)
 wavwrite("testOutputs/namaak.wav",fs,namaak.astype(np.uint16))
 
