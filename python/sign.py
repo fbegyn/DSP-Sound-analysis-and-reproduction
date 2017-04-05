@@ -4,18 +4,6 @@ import numpy as np
 class Signal:
     norm_samplerate = 44100
 
-    def synth(self,frequencies,amplitudes,duration,fs):
-        self.__duration = duration
-        self.__samplerate = fs
-        gen = np.zeros(int(duration*fs))
-        for i in range(len(frequencies)):
-            sound = coswav(frequencies[i],fs,duration)
-            for j in range(len(sound)):
-                sound[j] += amplitudes[i]*sound[j]
-                gen[j] += sound[j]
-            print(gen)
-        self.signal = gen
-
     def write(self,filename): # Schrijf huidig sample naar bestand uit
         wavwrite(filename,self.__samplerate,self.signal)
 
@@ -47,14 +35,14 @@ class Signal:
         plotFFT(self.signal,self.__samplerate)
 
     def copy_from(self, other): # Herschrijf huidig sample met een ander
-        self.signal = other.sample
+        self.signal = other.signal
         self.__samplerate = other.__samplerate
         self.__duration = other.__duration
         return self
 
     def copy(self): # Copies current signal into another
         cpy = Signal()
-        cpy = copy_from(self)
+        cpy = self.copy_from(self)
         return cpy
 
     def get_sample(self,start,end): # Returns a sample of the sound
@@ -78,3 +66,24 @@ class Signal:
 
     def resample(self, samplerate=norm_samplerate): # Change samplerate for the sample
         self.__samplerate = samplerate
+
+    def synth(self,frequencies,amplitudes,duration,fs):
+        self.__duration = duration
+        self.__samplerate = fs
+        gen = np.zeros(int(duration*fs))
+        print(gen)
+        for i in range(len(frequencies)):
+            if amplitudes[i]>0:
+                sound = coswav(frequencies[i],fs,duration)
+                sound *= amplitudes[i]
+                gen += sound
+        self.signal = gen
+
+    def split(self,seconds): # Verklein signaal tot gewenst interval
+        chopped = self.copy()
+        chopped.signal = chopped.signal[int(seconds*chopped.__samplerate):]
+        self.signal = self.signal[:int(seconds*self.__samplerate)]
+        return chopped
+
+    def amplify(self,factor): #Aplifies with factor
+        self.signal *= factor

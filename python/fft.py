@@ -23,7 +23,7 @@ class FFT:
         return factor
 
     def clean_noise(self):
-        self.fft[self.fft<.4]=0
+        self.fft[self.fft<.3]=0
 
     def plot(self):
         dataY=np.abs(fftshift(self.fft))
