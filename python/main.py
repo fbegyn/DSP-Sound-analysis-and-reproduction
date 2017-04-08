@@ -47,7 +47,8 @@ print('before')
 outp.info()
 #print(amplitudes)
 outp.synth(frequencies,amplitudes,duration,fs)
-outp.adsr(0.2,0.2,0.5,0.2)
+#outp.adsr(0.2,0.2,0.5,0.2) # Not yet implemented
+#outp.asd(3000,.05,.8,.4,2.4,5,1.5) # Not yet implemented
 print('after')
 outp.info()
 outp.spectrogram()

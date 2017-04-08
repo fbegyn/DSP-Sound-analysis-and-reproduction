@@ -79,7 +79,7 @@ def hammingWindow(numberOfSamples):
 		filter[i] = 0.54-0.46*cos((2*pi*i)/(numberOfSamples-1))
 	return filter
 
-def ASD_envelope(nSamples, tAttack, tRelease, susPlateau, kA, kS, kD):
+def ASD_envelope(nSamples, tAttack, tRelease, susPlateau, kA, kS, kD): # My example values: (3000,.05,.8,.4,2.4,5,1.5)
     # Number of samples for each stage
     sA = int( nSamples * tAttack )        # Attack
     sD = int( nSamples * (1.-tRelease) )  # Decay
