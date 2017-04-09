@@ -1,33 +1,9 @@
 from functions import *
+from fft import *
 import numpy as np
 
 class Signal:
     norm_samplerate = 44100
-
-    ###########################################################################
-    #                            Information output                           #
-    ###########################################################################
-    def info(self):
-        # Prints info about the signal
-        print('samplerate: ',self.__samplerate)
-        print('duration: ',self.__duration)
-        print('signal: ',self.signal)
-
-    def get_fs(self):
-        # Returns samplerate
-        return self.__samplerate
-
-    def get_dur(self):
-        # Get duration of the signal (in seconds)
-        return self.__duration
-
-    def spectrogram(self):
-        # Show spectrogram of the signal
-        spectrogram(self.signal,self.__samplerate)
-
-    def plotfft(self):
-        # Show an FFT plot of the signal
-        plotFFT(self.signal,self.__samplerate)
 
     ###########################################################################
     #                          Signal input methodes                          #
@@ -47,12 +23,6 @@ class Signal:
     #    self.__samplerate = samplerate
     #    self.__duration = duration
 
-    def copy(self):
-        # Copies current signal into another
-        cpy = Signal()
-        cpy = self.copy_from(self)
-        return cpy
-
     def copy_from(self, other):
         # Rewrite signal with an other signal
         self.signal = other.signal
@@ -63,6 +33,12 @@ class Signal:
     ###########################################################################
     #                         Signal output methodes                          #
     ###########################################################################
+    def copy(self):
+        # Copies current signal into another
+        cpy = Signal()
+        cpy = self.copy_from(self)
+        return cpy
+
     def write(self,filename):
         # Write the signal into a .wav file
         wavwrite(filename,self.__samplerate,self.signal)
@@ -76,17 +52,64 @@ class Signal:
         return sample
 
     ###########################################################################
+    #                            Information output                           #
+    ###########################################################################
+    def info(self):
+        # Prints info about the signal
+        print('samplerate: ',self.__samplerate)
+        print('# samples: ',len(self.signal))
+        print('duration: ',self.__duration)
+        print('signal: ',self.signal)
+
+    def get_fs(self):
+        # Returns samplerate
+        return self.__samplerate
+
+    def get_dur(self):
+        # Get duration of the signal (in seconds)
+        return self.__duration
+
+    def get_len(self):
+        # Returns the length of the signal
+        return len(self.signal)
+
+    def spectrogram(self):
+        # Show spectrogram of the signal
+        spectrogram(self.signal,self.__samplerate)
+
+    def plotfft(self):
+        # Show an FFT plot of the signal
+        fft = FFT(self)
+        fft.plot()
+        #plotFFT(self.signal,self.__samplerate)
+
+    ###########################################################################
     #                       Signal processing methodes                        #
     ###########################################################################
+    def add_end(self, other):
+        # Adds an other signal to the end
+        if(self.__samplerate != other.__samplerate):
+            print('Both samples must have same samplerate')
+        else:
+            self.signal = np.concatenate([self.signal,other.signal])
+            self.__duration += other.duration
+
     def cut(self,start,end):
         # Shortens the signal to desired interval
-        if start == end :
+        if start >= end :
             print('Please give in correct values')
         else:
             self.signal = self.signal[int(start*self.__samplerate):int(end*self.__samplerate)]
 
-    def split(self,seconds):
-        # Returns shortened signal to desired interval
+    def split_begin(self,seconds):
+        # Returns first part of the signal
+        chopped = self.copy()
+        chopped.signal = chopped.signal[:int(seconds*chopped.__samplerate)]
+        self.signal = self.signal[:int(seconds*self.__samplerate)]
+        return chopped
+
+    def split_end(self,seconds):
+        # Returns last part of the signal
         chopped = self.copy()
         chopped.signal = chopped.signal[int(seconds*chopped.__samplerate):]
         self.signal = self.signal[:int(seconds*self.__samplerate)]
@@ -112,6 +135,6 @@ class Signal:
                 gen += sound
         self.signal = gen
 
-    def fft(self):
-        # Returns FFT of the signal
-        return abs(fft(self.signal))
+    #def fft(self):
+    #    # Returns FFT of the signal
+    #    return abs(fft(self.signal))
