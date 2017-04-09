@@ -56,20 +56,21 @@ def plot(signal):
 	plt.plot(signal)
 	plt.show()
 
-def plotFFT(signal,fs):
-    # Shift the right part of the fft to the left, so it will plot correctly
-	# and rescale the X-axis
-    dataY=np.abs(fftshift(fft(signal)))
-    dataX=fftshift(fftfreq(len(signal),1./fs))
-    plt.figure()
-    plot=plt.plot(dataX,dataY)
-    plt.grid()
-    plt.show()
+#def plotFFT(signal,fs):
+#    # Shift the right part of the fft to the left, so it will plot correctly
+#	# and rescale the X-axis
+#    dataY=np.abs(fftshift(fft(signal)))
+#    dataX=fftshift(fftfreq(len(signal),1./fs))
+#    plt.figure()
+#    plot=plt.plot(dataX,dataY)
+#    plt.grid()
+#    plt.show()
 
 def spectrogram(signaal,fs):
 	plt.figure()
 	plt.specgram(signaal,NFFT=1024,Fs=fs,noverlap=512)
 	plt.show()
+
 ###############################################################################
 #                             Filters & Envelopes                             #
 ###############################################################################
