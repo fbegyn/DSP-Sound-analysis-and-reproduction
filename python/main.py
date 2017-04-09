@@ -2,6 +2,7 @@ from functions import *
 from sign import *
 from fft import *
 
+# Experiment imports, if using permanent, put them above
 import numpy as np
 from scipy.signal import argrelmax,argrelextrema
 
@@ -14,6 +15,8 @@ inp.from_file('sampleSounds/galop02.wav')
 inp.write('testOutputs/original.wav')
 inp.info()
 #inp.plotfft()
+
+
 ##### Pick a sample out of the input sound
 sample=inp.get_sample(0.58, 1.58)
 sample.info()
@@ -28,7 +31,7 @@ sample_f = FFT(sample)
 sample_f.info()
 #sample_f.plot()
 factor = sample_f.normalize()
-sample_f.clean_noise()
+sample_f.clean_noise(.3)
 
 
 ##### Find the remaining frequencies and store them in an array
