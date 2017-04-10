@@ -19,12 +19,11 @@ School project aiming towards sound decoding and reproduction in python.
 (3. Fysisch)
 
 ## Begeleiding & Timing
-29 maart: een 2e geluid kiezen naar keuze en doormailen (p.devos@ugent.be)
-19 april: begeleiding
-3 mei: begeleiding
-10 mei: begeleiding
-24 mei: code ingeven met commentaar (dient als verslag)
-Eigen geluid kiezen tegen volgende week, 29 maart (per mail p.devos@ugent.be)  
+* 29 maart: een 2e geluid kiezen naar keuze en doormailen (p.devos@ugent.be)
+* 19 april: begeleiding
+* 3 mei: begeleiding
+* 10 mei: begeleiding
+* 24 mei: code ingeven met commentaar (dient als verslag) 
 
 ## Research
 * https://www.microsoft.com/en-us/research/wp-content/uploads/2016/07/ParametricWaveField.pdf
