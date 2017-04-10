@@ -18,8 +18,6 @@ def wavwrite(filename,fs,signaal):
 	normalized=np.int16(signaal/max(np.fabs(signaal))*32767)
 	wavfile.write(filename,fs,normalized)
 
-
-
 ###############################################################################
 #                              Signal processing                              #
 ###############################################################################
@@ -29,8 +27,6 @@ def stereo2mono(stereo_left,stereo_right):
 def getSample(fs,sound, start,duration):
 	# start and duration in seconds
 	return sound[int(round(start*fs)):int(round((start+duration)*fs))]
-
-
 
 ###############################################################################
 #                         Signal generation methodes                          #
