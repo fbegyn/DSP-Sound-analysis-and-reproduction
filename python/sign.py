@@ -33,7 +33,7 @@ class Signal:
             raise ValueError("The start of the signal can't be negative.")
         if ((start+duration) > self.__duration):
             raise ValueError("The signal duration isn't that long.")
-        self.signal = other.signal[int(seconds*other.__samplerate):]
+        self.signal = other.signal[int(start*other.__samplerate):int((start+duration)*other.__samplerate)]
         self.__samplerate = other.__samplerate
         self.__duration = len(self.signal)*(1./self.__samplerate)
 
