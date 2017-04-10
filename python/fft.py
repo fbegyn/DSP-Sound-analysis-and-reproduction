@@ -13,10 +13,6 @@ class FFT:
         self.__samplerate = Signal.get_fs()
         self.fft = abs(fft(self.__signal))
 
-    def info(self):
-        print('Signal: ', self.__signal)
-        print('Samplerate: ',self.__samplerate)
-
     ###########################################################################
     #                         Signal output methodes                          #
     ###########################################################################
@@ -26,6 +22,12 @@ class FFT:
     ###########################################################################
     #                            Information output                           #
     ###########################################################################
+    def info(self):
+        # Prints info about the signal
+        print("   Signal: array[dtype:"+str(self.__signal.dtype)+", len:"+str(len(self.__signal))+"]")
+        print("                "+np.array_str(self.__signal))
+        print("   samplerate: "+str(self.__samplerate))
+
     def plot(self):
         # Shift the right part of the fft to the left, so it will plot correctly
     	# and rescale the X-axis
