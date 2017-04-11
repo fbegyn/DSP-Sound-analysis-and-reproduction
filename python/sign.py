@@ -161,6 +161,56 @@ class Signal:
             raise ValueError("Amplifies factor can't be zero")
         self.signal *= factor
 
+    def sampling(self, sample_length, sample_overlap, extend=True):
+        # Returns a numpy.array with samples of the signal
+        # If extend = True, will add an extra sample at the start and end.
+        if(sample_length <= 0):
+            raise ValueError("Sample length must be greater than 0.")
+        if(sample_length > self.get_len()):
+            raise ValueError("Sample length can't be greater than signal length.")
+        if(sample_overlap < 0):
+            raise ValueError("Sample overlap can not be negative.")
+        if(sample_overlap >= sample_length):
+            raise ValueError("Sample overlap must be lower than sample_length.")
+
+        step = sample_length - sample_overlap
+
+        # Make a copy of self, so we don't modify original signal
+        self_copy = Signal()
+        self_copy.copy_from(self)
+
+        # Add zeros to self_copy to correct to have a full sample steps
+        zeros2add = (self_copy.get_len() - sample_length) % step
+        zeros = Signal()
+        if(zeros2add != 0): # add will be 0 if we don't need to add extra
+            zeros2add = sample_overlap - zeros2add
+            zeros.from_sound(np.zeros(zeros2add,dtype=self_copy.signal.dtype),self_copy.get_fs())
+            self_copy.concatenate(zeros)
+
+        if(extend):
+            # Add zeros so we have an extra sample at the start and end
+            zeros.from_sound(np.zeros(step,dtype=self_copy.signal.dtype),self_copy.get_fs())
+            self_copy.concatenate(zeros) # Add to the end
+            zeros.concatenate(self_copy) # Add to the front
+            self_copy.copy_from(zeros)   # Puts result back into self_copy
+
+        # Calculate how much samples we will have
+        index = self_copy.get_len() - sample_length
+        index /= step
+        index += 1
+        #print("Number of samples: "+str(index))
+
+        # Create all the samples into an array
+        samples = []
+        for i in range (0,index):
+            begin = i*step
+            end = begin+sample_length
+            #print("--- sample "+str(i)+": ["+str(begin)+","+str(end)+"]  ---")
+            # Need to use append because the size of the array needs to grow
+            samples.append(self_copy.get_sample(begin*(1./self_copy.get_fs()),end*(1./self_copy.get_fs())))
+            #samples[i].info()
+        return samples # An array with all the samples
+
     def synth(self, frequencies, amplitudes, fs, duration):
         # Synthesise
         self.__duration = duration
