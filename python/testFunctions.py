@@ -92,14 +92,19 @@ index = inp.get_len() - sample_length
 index /= step
 index += 1
 print("Number of samples: "+str(index))
+sample = []
 for i in range (0,index):
     begin = i*step
     end = begin+sample_length
     print("--- sample "+str(i)+": ["+str(begin)+","+str(end)+"]  ---")
-    sample = Signal()
-    sample = inp.get_sample(begin*(1./inp.get_fs()),end*(1./inp.get_fs()))
-    sample.info()
+    # Need to use append because the size of the array needs to grow
+    sample.append(inp.get_sample(begin*(1./inp.get_fs()),end*(1./inp.get_fs())))
+    sample[i].info()
 
+created = Signal()
     ## sytnhesize and sommate -> wav output (WIP)
+for s in sample:
+    created.signal += s.signal
+
 
 ### End Of File ###
