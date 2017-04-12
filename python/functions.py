@@ -24,7 +24,7 @@ def wavwrite(filename,fs,signaal):
 def stereo2mono(stereo_left,stereo_right):
 	return ((stereo_left + stereo_right)/2)
 
-def getSample(fs,sound, start,duration):
+def getSample(fs,sound,start,duration):
 	# start and duration in seconds
 	return sound[int(round(start*fs)):int(round((start+duration)*fs))]
 
@@ -62,10 +62,10 @@ def plot(signal):
 #    plt.grid()
 #    plt.show()
 
-def spectrogram(signaal,fs):
-	plt.figure()
-	plt.specgram(signaal,NFFT=1024,Fs=fs,noverlap=512)
-	plt.show()
+#def spectrogram(signaal,fs):
+#	plt.figure()
+#	plt.specgram(signaal,NFFT=1024,Fs=fs,noverlap=512)
+#	plt.show()
 
 ###############################################################################
 #                             Filters & Envelopes                             #
