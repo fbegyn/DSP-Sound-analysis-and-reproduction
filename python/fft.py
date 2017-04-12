@@ -34,7 +34,7 @@ class FFT:
         dataY=np.abs(fftshift(self.fft))
         dataX=fftshift(fftfreq(len(self.__signal),1./self.__samplerate))
         plt.figure()
-        plot = plt.plot(dataX,dataY)
+        plt.plot(dataX,dataY)
         plt.grid()
         plt.show()
 
@@ -44,6 +44,8 @@ class FFT:
     def normalize(self):
         # Rescale the fft into range 0..1
         factor = np.ndarray.max(self.fft)
+        if(factor == 1):
+            raise ValueError("FFT is already normalized")
         self.fft /= factor
         return factor
 
@@ -52,11 +54,18 @@ class FFT:
         self.fft[self.fft<level]=0
 
     def find_freq(self):
-        # Find the max values of the fft
-        return argrelmax(self.fft[:len(self.fft)/2],order=2)[0]/2
+        # Find the max frequencies of the fft
+        #return argrelmax(self.fft[:len(self.fft)/2],order=2)[0]/2 # Waarom 2e orde?? en waarom nog eens delen door 2?
+        index=argrelmax(self.fft[:len(self.fft)/2],order=1) # Index of the array
+        frequencies=[]
+        for i in np.nditer(index):
+            # Convert index to frequencies with scaling factor: fs/N
+            frequencies.append(i * self.__samplerate * (1./len(self.fft)))
+        return frequencies
 
-    def get_amplitudes(self,freq):
+    def get_amplitudes(self,frequencies):
         amplitudes = []
-        for i in np.nditer(freq):
-            amplitudes.append(self.fft[i])
+        for freq in frequencies:
+            # Convert frequencies to index with scaling factor: N/fs
+            amplitudes.append(self.fft[int(freq * len(self.fft) * (1./self.__samplerate))])
         return amplitudes
