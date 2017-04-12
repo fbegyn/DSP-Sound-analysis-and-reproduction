@@ -9,8 +9,10 @@ class Signal:
     #                          Signal input methodes                          #
     ###########################################################################
     @classmethod
-    def from_file(self, filename=None):
-        # Generate signal from .wav file
+    def from_file(self, filename):
+        # DESCRIPTION : Generate a Signal instance from a .wav file
+        # ARGUMENTS   : filename: string to filename
+        # RETURN      : None
         if filename:
             self.__samplerate, self.signal = wavread(filename)
             if (self.signal.ndim == 2): #check if stereo, convert to mono
@@ -18,15 +20,24 @@ class Signal:
             self.__duration = len(self.signal)*(1./self.__samplerate)
 
     @classmethod
-    def from_sound(self, sound, samplerate, start=0, end=None):
-        # Generate signal out of a (np.array) sound
+    def from_sound(self, sound, fs, start=0, end=None):
+        # DESCRIPTION : Generate a Signal instance from an array
+        # ARGUMENTS   : sound: np.array with the sound
+        #               fs: samplerate
+        #               start: index of np.array sound
+        #               end: index of np.array sound
+        # RETURN      : None
         self.signal = sound[start:end]
-        self.__samplerate = samplerate
+        self.__samplerate = fs
         self.__duration = len(self.signal)*(1./self.__samplerate)
 
     @classmethod
     def from_Signal(self, other, start, duration):
-        # Generate a signal out of a longer Signal
+        # DESCRIPTION : Generate a Signal instance from an other (longer) Signal instance
+        # ARGUMENTS   : other: the other Signal instance
+        #               start: start time (in seconds) of the signal
+        #               duration: time (in seconds) that signal last
+        # RETURN      : None
         if(not self.instance_of(other)):
             raise TypeError("Cannot create Signal if argument is not of same class (Signal).")
         if (start < 0):
@@ -38,25 +49,31 @@ class Signal:
         self.__duration = len(self.signal)*(1./self.__samplerate)
 
     def copy_from(self, other):
-        # Generate a copy of an other signal
+        # DESCRIPTION : Generate a copy of a Signal instance
+        # ARGUMENTS   : other: the Signal instance that requires a copy
+        # RETURN      : None
         if(not self.instance_of(other)):
             raise TypeError("Cannot copy if argument is not of same class (Signal).")
         self.signal = other.signal
         self.__samplerate = other.__samplerate
         self.__duration = other.__duration
-        return self
 
     ###########################################################################
     #                         Signal output methodes                          #
     ###########################################################################
     def copy(self):
-        # Copies current signal into another
+        # DESCRIPTION : Generate a Signal instance equivalent to itself
+        # ARGUMENTS   : None
+        # RETURN      : cpy: a Signal instance containing a copy of itself
         cpy = Signal()
         cpy = self.copy_from(self)
         return cpy
 
     def get_sample(self, start, end):
-        # Returns a part of the signal
+        # DESCRIPTION : Generate a Signal instance containing a part of itself
+        # ARGUMENTS   : start: beginning (in seconds) of required sample
+        #               end: the end (in seconds) of required sample
+        # RETURN      : sample: a Signal instance containing the sample
         if (end > self.__duration):
             raise ValueError("The signal duration isn't that long.")
         if (start < 0):
@@ -70,29 +87,39 @@ class Signal:
         return sample
 
     def write(self, filename):
-        # Write the signal into a .wav file
+        # DESCRIPTION : Generate a .wav file containing the sound of the signal
+        # ARGUMENTS   : filename: string of output file
+        # RETURN      : None (and a .wav output file)
         wavwrite(filename,self.__samplerate,self.signal)
 
     ###########################################################################
     #                            Information output                           #
     ###########################################################################
     def info(self):
-        # Prints info about the signal
+        # DESCRIPTION : Print all information of the Signal instance
+        # ARGUMENTS   : None
+        # RETURN      : None (and a visual representation of the Signal instance)
         print("duration: "+str(self.__duration)+" seconds")
         print("samplerate: "+str(self.__samplerate))
         print("signal: dtype:"+str(self.signal.dtype)+", len:"+str(len(self.signal)))
         print("       "+np.array_str(self.signal))
 
     def get_fs(self):
-        # Returns samplerate
+        # DESCRIPTION : Get-method to ask the Signal instance the sample rate
+        # ARGUMENTS   : None
+        # RETURN      : __samplerate: the samplerate of the Signal instance
         return self.__samplerate
 
     def get_dur(self):
-        # Get duration of the signal (in seconds)
+        # DESCRIPTION : Get-method to ask the Signal instance the duration
+        # ARGUMENTS   : None
+        # RETURN      : __duration: the duration (in seconds) of the Signal instance
         return self.__duration
 
     def get_len(self):
-        # Returns the length of the signal
+        # DESCRIPTION : Get-method to ask the Signal instance the length of the signal
+        # ARGUMENTS   : None
+        # RETURN      : len(signal): the length of the signal (length of np.array)
         return len(self.signal)
 
     def plot(self):
@@ -163,6 +190,7 @@ class Signal:
         # Split the signal into two parts
         if (seconds >= self.__duration):
             raise ValueError("The signal duration isn't that long.")
+
         chopped = self.copy()
         chopped.signal = chopped.signal[int(seconds*chopped.__samplerate):]
         self.signal = self.signal[:int(seconds*self.__samplerate)]
@@ -230,18 +258,24 @@ class Signal:
         return samples # An array with all the samples
 
     def synth(self, frequencies, amplitudes, duration, fs=norm_samplerate):
+        # Synthesise a sound depending on input frequencies and amplitudes
         if (len(frequencies) != len(amplitudes)):
             raise ValueError("Frequencies and amplitues have different length.")
         if (duration <= 0):
             raise ValueError("Duration must be greater than zero.")
+
         self.signal = np.zeros(int(round(duration*fs)))
+        self.__samplerate = fs
+        # Duration*fs is rounded => signal length => different self__duration
+        # Difference between durations and __duration depends on fs
+        self.__duration = len(self.signal)*(1./self.__samplerate)
+
+        # Creation of all the frequencies
         for i in range(len(frequencies)):
             if amplitudes[i]>0:
-                signal = coswav(frequencies[i],fs,duration)
+                signal = coswav(frequencies[i],self.__samplerate,self.__duration)
                 signal *= amplitudes[i]
                 self.signal += signal
-        self.__samplerate = fs
-        self.__duration = duration
 
     #def fft(self):
     #    # Returns FFT of the signal

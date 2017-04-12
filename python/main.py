@@ -45,11 +45,10 @@ envelope = Signal()
 envelope.from_sound(ASD_envelope(sample_length,.05,.8,.4,2.4,5,1.5),new_fs)
 envelope.plot()
 
+out = Signal()
+
 for sample in samples:
     #sample.info()
-    print(str(sample.get_dur()))
-    print(str(sample.get_len()))
-    print("-----\n")
     #sample.spectrogram()
     sampleF = FFT(sample)
     #sampleF.plot()
@@ -64,13 +63,10 @@ for sample in samples:
     # Synthesise the sample
     synth = Signal()
     synth.synth(frequencies,amplitudes,sample.get_dur(),new_fs)
-    #out.info()
-    #out.spectrogram()
-    print(str(synth.get_dur()))
-    print(str(synth.get_len()))
-    print("----------\n")
 
-    #outF = FFT(synth)
-    #outF.plot()
+    # Add ASD_envelope
+    synth.mul(envelope)
+
+    # TODO: Add all synth to full out Signal
 
 ### End Of File ###

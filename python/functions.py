@@ -24,9 +24,9 @@ def wavwrite(filename,fs,signaal):
 def stereo2mono(stereo_left,stereo_right):
 	return ((stereo_left + stereo_right)/2)
 
-def getSample(fs,sound,start,duration):
-	# start and duration in seconds
-	return sound[int(round(start*fs)):int(round((start+duration)*fs))]
+#def getSample(fs,sound,start,duration):
+#	# start and duration in seconds
+#	return sound[int(round(start*fs)):int(round((start+duration)*fs))]
 
 ###############################################################################
 #                         Signal generation methodes                          #
@@ -41,8 +41,8 @@ def pulse(numberOfSamples):
 
 def coswav(f,fs,duur):
 	lengte=fs*duur
-	stap=(2.*pi*f)/fs
-	return cos(np.arange(0,lengte*stap,stap))
+	stap=(2.*pi*f)/(1.*fs)
+	return cos(np.arange(0.,lengte*stap,stap))
 
 ###############################################################################
 #                          Plot and print functions                           #
