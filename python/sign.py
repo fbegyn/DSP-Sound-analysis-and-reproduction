@@ -95,9 +95,12 @@ class Signal:
         # Returns the length of the signal
         return len(self.signal)
 
-    def spectrogram(self):
+    def spectrogram(self,NFFT=1024,noverlap=512):
         # Show spectrogram of the signal
-        spectrogram(self.signal,self.__samplerate)
+        #spectrogram(self.signal,self.__samplerate)
+        plt.figure()
+        plt.specgram(self.signal,NFFT,self.__samplerate,noverlap)
+        plt.show()
 
     def plotfft(self):
         # Show an FFT plot of the signal
@@ -211,18 +214,19 @@ class Signal:
             #samples[i].info()
         return samples # An array with all the samples
 
-    def synth(self, frequencies, amplitudes, fs, duration):
-        # Synthesise
-        self.__duration = duration
-        self.__samplerate = fs
-        gen = np.zeros(int(duration*fs))
-        #print(gen)
+    def synth(self, frequencies, amplitudes, duration, fs=norm_samplerate):
+        if (len(frequencies) != len(amplitudes)):
+            raise ValueError("Frequencies and amplitues have different length.")
+        if (duration <= 0):
+            raise ValueError("Duration must be greater than zero.")
+        self.signal = np.zeros(int(round(duration*fs)))
         for i in range(len(frequencies)):
             if amplitudes[i]>0:
                 sound = coswav(frequencies[i],fs,duration)
                 sound *= amplitudes[i]
-                gen += sound
-        self.signal = gen
+                self.signal += sound
+        self.__samplerate = fs
+        self.__duration = duration
 
     #def fft(self):
     #    # Returns FFT of the signal
