@@ -87,9 +87,6 @@ for i in range (0,index):
     samples.append(inp.get_sample(begin*(1./inp.get_fs()),end*(1./inp.get_fs())))
     samples[i].info()
 
-created = Signal()
-    ## sytnhesize and sommate -> wav output (WIP)
-for s in sample:
-    created.signal += s.signal
+#return samples
 
 ### End Of File ###

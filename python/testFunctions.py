@@ -45,7 +45,7 @@ inp.info()
 #inp.info()
 
 ##### Pick a sample out of the input sound
-print("\n---------- SAMPLE ----------")
+print("\n---------- INPUT SAMPLE ----------")
 inp.cut(0.58, 1.58)
 inp.info()
 inp.write('testOutputs/sample.wav')
@@ -58,15 +58,40 @@ inp.write('testOutputs/sample.wav')
 ###############################################################################
 sample_length = 1024
 sample_overlap = 512
+print("")
 samples = inp.sampling(sample_length,sample_overlap)
 
 ###############################################################################
 #                            Output of sample sound                           #
 ###############################################################################
-print("\n---------- OUTPUT SAMPLES ----------")
-for sample in samples:
-    sample.info()
-    print("")
+print("\n---------- OUTPUT SAMPLE ----------")
+sample = Signal()
+sample = samples[25].copy()
+sample.info()
+#sample.spectrogram()
+#sample.plotfft()
 
+###############################################################################
+#                                  Synthesise                                 #
+###############################################################################
+print("\n---------- SYNTHESISE ----------")
+sampleF = FFT(sample)
+#sampleF.plot()
+norm_factor = sampleF.normalize()
+sampleF.clean_noise(.15)
+sampleF.plot()
+frequencies = sampleF.find_freq()
+amplitudes = sampleF.get_amplitudes(frequencies)
+#for i in range(len(frequencies)):
+#    print(frequencies[i],amplitudes[i])
+
+# Synthesise
+out = Signal()
+out.synth(frequencies,amplitudes,sample.get_dur())
+out.info()
+#out.spectrogram()
+
+outF = FFT(out)
+outF.plot()
 
 ### End Of File ###
