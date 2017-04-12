@@ -41,16 +41,16 @@ def pulse(numberOfSamples):
 
 def coswav(f,fs,duur):
 	lengte=fs*duur
-	stap=2*pi*f/fs
+	stap=(2.*pi*f)/fs
 	return cos(np.arange(0,lengte*stap,stap))
 
 ###############################################################################
 #                          Plot and print functions                           #
 ###############################################################################
-def plot(signal):
-	plt.figure()
-	plt.plot(signal)
-	plt.show()
+#def plot(signal):
+#	plt.figure()
+#	plt.plot(signal)
+#	plt.show()
 
 #def plotFFT(signal,fs):
 #    # Shift the right part of the fft to the left, so it will plot correctly

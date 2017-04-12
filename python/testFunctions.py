@@ -66,7 +66,7 @@ samples = inp.sampling(sample_length,sample_overlap)
 ###############################################################################
 print("\n---------- OUTPUT SAMPLE ----------")
 sample = Signal()
-sample = samples[25].copy()
+sample = samples[25].copy() # Just to test a single sample, for all samples, look in main.py
 sample.info()
 #sample.spectrogram()
 #sample.plotfft()

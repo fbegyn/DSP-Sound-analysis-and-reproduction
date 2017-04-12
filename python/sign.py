@@ -95,6 +95,11 @@ class Signal:
         # Returns the length of the signal
         return len(self.signal)
 
+    def plot(self):
+    	plt.figure()
+    	plt.plot(self.signal)
+    	plt.show()
+
     def spectrogram(self,NFFT=1024,noverlap=512):
         # Show spectrogram of the signal
         #spectrogram(self.signal,self.__samplerate)
@@ -134,6 +139,16 @@ class Signal:
         if(len(self.signal) != len(other.signal)):
             raise ValueError("Both signals must have same number of samples.")
         self.signal += other.signal
+
+    def mul(self,other):
+        # Multiply two signals together
+        if(not self.instance_of(other)):
+            raise TypeError("Cannot multiply if argument is not of same class (Signal).")
+        if(self.__samplerate != other.__samplerate):
+            raise ValueError("Both signals must have same samplerate.")
+        if(len(self.signal) != len(other.signal)):
+            raise ValueError("Both signals must have same number of samples.")
+        self.signal *= other.signal
 
     def cut(self, start, end):
         # Shortens the signal to desired interval
@@ -185,7 +200,7 @@ class Signal:
         # Add zeros to self_copy to correct to have a full sample steps
         zeros2add = (self_copy.get_len() - sample_length) % step
         zeros = Signal()
-        if(zeros2add != 0): # add will be 0 if we don't need to add extra
+        if(zeros2add != 0): # Will be 0 if we don't need to add extra
             zeros2add = sample_overlap - zeros2add
             zeros.from_sound(np.zeros(zeros2add,dtype=self_copy.signal.dtype),self_copy.get_fs())
             self_copy.concatenate(zeros)
@@ -222,9 +237,9 @@ class Signal:
         self.signal = np.zeros(int(round(duration*fs)))
         for i in range(len(frequencies)):
             if amplitudes[i]>0:
-                sound = coswav(frequencies[i],fs,duration)
-                sound *= amplitudes[i]
-                self.signal += sound
+                signal = coswav(frequencies[i],fs,duration)
+                signal *= amplitudes[i]
+                self.signal += signal
         self.__samplerate = fs
         self.__duration = duration
 
