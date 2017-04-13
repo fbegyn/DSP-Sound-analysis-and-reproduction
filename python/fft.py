@@ -44,8 +44,10 @@ class FFT:
     def normalize(self):
         # Rescale the fft into range 0..1
         factor = np.ndarray.max(self.fft)
+        if(factor == 0):
+            raise ValueError("FFT has no frequencies to normalize.")
         if(factor == 1):
-            raise ValueError("FFT is already normalized")
+            raise ValueError("FFT is already normalized.")
         self.fft /= factor
         return factor
 
@@ -56,7 +58,9 @@ class FFT:
     def find_freq(self):
         # Find the max frequencies of the fft
         #return argrelmax(self.fft[:len(self.fft)/2],order=2)[0]/2 # Waarom 2e orde?? en waarom nog eens delen door 2?
-        index=argrelmax(self.fft[:len(self.fft)/2],order=1) # Index of the array
+        index=argrelmax(self.fft[:len(self.fft)/2],order=1)[0] # Index of the array
+        if(len(index) == 0):
+            raise Warning("No max frequencies found.")
         frequencies=[]
         for i in np.nditer(index):
             # Convert index to frequencies with scaling factor: fs/N
@@ -64,6 +68,8 @@ class FFT:
         return frequencies
 
     def get_amplitudes(self,frequencies):
+        if(len(frequencies) == 0):
+            raise Warning("No frequencies given.")
         amplitudes = []
         for freq in frequencies:
             # Convert frequencies to index with scaling factor: N/fs
