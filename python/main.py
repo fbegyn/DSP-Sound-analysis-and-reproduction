@@ -32,6 +32,7 @@ inp.write('testOutputs/sample.wav')
 print("\n---------- SAMPLING ----------")
 sample_length = 1024
 sample_overlap = 512
+step = sample_length - sample_overlap
 samples = inp.sampling(sample_length,sample_overlap)
 print("Number of samples: "+str(len(samples)))
 
@@ -41,32 +42,43 @@ print("Number of samples: "+str(len(samples)))
 print("\n---------- SYNTHESISE ----------")
 new_fs = 44100 # In the end we'll need 48000 sps
 
+##### Create envelope
 envelope = Signal()
 envelope.from_sound(ASD_envelope(sample_length,.05,.8,.4,2.4,5,1.5),new_fs)
-envelope.plot()
+#envelope.plot()
 
-out = Signal()
-
+##### Synthesise every sample
+synth_samples = []
 for sample in samples:
     #sample.info()
-    #sample.spectrogram()
+
+    # Find frequencies for creating the sound with there amplitudes
     sampleF = FFT(sample)
-    #sampleF.plot()
     norm_factor = sampleF.normalize()
     sampleF.clean_noise(.15)
     #sampleF.plot()
     frequencies = sampleF.find_freq()
     amplitudes = sampleF.get_amplitudes(frequencies)
-    #for i in range(len(frequencies)):
-    #    print(frequencies[i],amplitudes[i])
+    #amplitudes *= norm_factor
 
     # Synthesise the sample
     synth = Signal()
     synth.synth(frequencies,amplitudes,sample.get_dur(),new_fs)
 
-    # Add ASD_envelope
+    ##### Add ASD_envelope to synthesised samples
     synth.mul(envelope)
 
-    # TODO: Add all synth to full out Signal
+    ##### synthesised sample ready for radding together
+    synth_samples.append(synth)
+    #envelope.info()
+
+###############################################################################
+#                        Put samples together to output                       #
+###############################################################################
+out = Signal()
+out.remake(synth_samples,sample_length,sample_overlap)
+
+
+
 
 ### End Of File ###
