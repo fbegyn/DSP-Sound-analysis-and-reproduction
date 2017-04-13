@@ -274,7 +274,7 @@ class Signal:
         # Add zeros to self_copy to correct to have all full sample_lengths
         short_sample = (self_copy.get_len() - sample_length) % step
         if(short_sample != 0): # Will be 0 if we don't need to add extra
-            zeros2add = sample_overlap - short_sample
+            zeros2add = sample_length - short_sample
             self_copy.extend(0,zeros2add)
 
         if(extend):
@@ -341,6 +341,8 @@ class Signal:
         #               duration: the length (in seconds) of the desired signal
         #               fs: desired sample rate
         # RETURN      : None
+        if (len(frequencies) == 0):
+            raise ValueError("Nothing to synthesise.")
         if (len(frequencies) != len(amplitudes)):
             raise ValueError("Frequencies and amplitues have different length.")
         if (duration <= 0):
