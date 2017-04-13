@@ -54,16 +54,29 @@ for sample in samples:
 
     # Find frequencies for creating the sound with there amplitudes
     sampleF = FFT(sample)
-    norm_factor = sampleF.normalize()
+    try:
+        norm_factor = sampleF.normalize()
+    except ValueError: # Catching already normalized
+                       # Catching dividing by 0 if no max found
+        norm_factor = 1
     sampleF.clean_noise(.15)
     #sampleF.plot()
-    frequencies = sampleF.find_freq()
-    amplitudes = sampleF.get_amplitudes(frequencies)
+    try:
+        frequencies = sampleF.find_freq()
+    except Warning: # If no frequencies are found
+        frequencies = []
+    try:
+        amplitudes = sampleF.get_amplitudes(frequencies)
+    except Warning: # If no frequencies are given
+        amplitudes = []
     #amplitudes *= norm_factor
 
     # Synthesise the sample
     synth = Signal()
-    synth.synth(frequencies,amplitudes,sample.get_dur(),new_fs)
+    if(len(frequencies) != 0):
+        synth.synth(frequencies,amplitudes,sample.get_dur(),new_fs)
+    else:
+        synth.from_sound(np.zeros(int(round(sample.get_dur()*new_fs))),new_fs)
 
     ##### Add ASD_envelope to synthesised samples
     synth.mul(envelope)
