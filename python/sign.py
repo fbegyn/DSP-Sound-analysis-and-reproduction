@@ -89,10 +89,12 @@ class Signal:
         sample.__duration = end - start
         return sample
 
-    def write(self, filename):
+    def write_file(self, filename):
         # DESCRIPTION : Generate a .wav file containing the sound of the signal
         # ARGUMENTS   : filename: string of output file
         # RETURN      : None (and a .wav output file)
+        if(self.signal.dtype != np.int16):
+            self.to_int16()
         wavwrite(filename,self.__samplerate,self.signal)
 
     ###########################################################################
@@ -102,11 +104,11 @@ class Signal:
         # DESCRIPTION : Print all information of the Signal instance
         # ARGUMENTS   : None
         # RETURN      : None (and a visual representation of the Signal instance)
-        print("duration(sec) : "+str(self.__duration))
-        print("samplerate    : "+str(self.__samplerate))
-        print("signal: len   : "+str(len(self.signal)))
-        print("        dtype : "+str(self.signal.dtype))
-        print("        "+np.array_str(self.signal))
+        print("    duration(sec) : "+str(self.__duration))
+        print("    samplerate    : "+str(self.__samplerate))
+        print("    signal: len   : "+str(len(self.signal)))
+        print("            dtype : "+str(self.signal.dtype))
+        print("            "+np.array_str(self.signal))
 
     def get_fs(self):
         # DESCRIPTION : Get-method to ask the Signal instance the sample rate
@@ -158,6 +160,16 @@ class Signal:
         # RETURN      : True: if instance of Signal
         #               False: otherwise
         return True if isinstance(other, Signal) else False
+
+    def to_int16(self):
+        # DESCRIPTION : Changes dtype of signal to int16 and rounds correctly (not floor)
+        # ARGUMENTS   : None
+        # RETURN      : None
+        if(self.signal.dtype == np.int16):
+            raise Warning("signal dtype already int.")
+
+        self.signal = np.rint(self.signal) # Correct afronden
+        self.signal = self.signal.astype(np.int16)# Change float -> int
 
     def add(self,other):
         # DESCRIPTION : Sommate two signals together
@@ -277,6 +289,8 @@ class Signal:
             raise ValueError("Sample overlap must be lower than sample_length.")
 
         step = sample_length - sample_overlap
+        print("    length of samples : "+str(sample_length))
+        print("    overlap of samples : "+str(sample_overlap))
 
         # Make a copy of self, so we don't modify original signal
         self_copy = Signal()
@@ -303,13 +317,13 @@ class Signal:
         for i in range (0,index):
             begin = i*step
             end = begin+sample_length
-            #print("--- sample "+str(i)+": ["+str(begin)+","+str(end)+"[  ---")
+            #print("    Sample "+str(i)+":\t["+str(begin)+","+str(end)+"[")
             # Need to use append because the size of the array needs to grow
             samples.append(self_copy.get_sample(begin*(1./self_copy.get_fs()),end*(1./self_copy.get_fs())))
             #samples[i].info()
         return samples # An array with all the samples
 
-    def remake(self, samples, sample_length, sample_overlap):
+    def assemble(self, samples, sample_length, sample_overlap):
         # DESCRIPTION : Add all Signals together to a single Signal
         # ARGUMENTS   : samples: list with all the samples
         #               sample_length: length of each sample
@@ -317,8 +331,6 @@ class Signal:
         # RETURN      : samples: A np.array of Signal instances with all the samples
         if(sample_length <= 0):
             raise ValueError("Sample length must be greater than 0.")
-        if(sample_length > self.get_len()):
-            raise ValueError("Sample length can't be greater than signal length.")
         if(sample_overlap < 0):
             raise ValueError("Sample overlap can not be negative.")
         if(sample_overlap >= sample_length):
@@ -326,25 +338,25 @@ class Signal:
 
         # Calculate the length of the new signal
         step = sample_length - sample_overlap
-        remake_length = (len(samples)-1) * step + sample_length
-        print("calculated length: "+str(remake_length))
-        remake = Signal()
-        remake.from_sound(np.zeros(remake_length,dtype=samples[0].signal.dtype),samples[0].get_fs())
-        print("remake1: "+str(remake.get_len()))
+        signal_length = (len(samples)-1) * step + sample_length
+
+        # Initiate assembled Signal
+        if(not self.instance_of(samples[0])):
+            raise TypeError("Sample "+str(i)+" is not of same class (Signal).")
+        self.signal = np.zeros(signal_length,dtype=samples[0].signal.dtype)
+        self.__samplerate = samples[0].get_fs()
+        self.__duration = len(self.signal)*(1./self.__samplerate)
 
         for i in range(0,len(samples)):
             sample = samples[i]
             if(not self.instance_of(sample)):
                 raise TypeError("Sample "+str(i)+" is not of same class (Signal).")
             if(sample.get_len() != sample_length):
-                raise TypeError("Sample "+str(i)+" has wrong length.")
+                raise ValueError("Sample "+str(i)+" has wrong length.")
             # For each synthesised sample: add extra zeros to begin and end
             # To recreate full length of signal (sum of all samples, with overlap!)
-            print("remake2: "+str(remake.get_len()))
             sample.extend(i*step,(len(samples)-1-i)*step)
-            print("sample: "+str(sample.get_len()))
-            print("remake3: "+str(remake.get_len()))
-            remake.add(sample) # not working becose of remake has wrong length, but length was correct at line 343
+            self.add(sample) # not working becose of signal has wrong length, but length was correct at line 342
 
     def synth(self, frequencies, amplitudes, duration, fs=norm_samplerate):
         # DESCRIPTION : Synthesise a sound
@@ -370,7 +382,7 @@ class Signal:
         for i in range(len(frequencies)):
             if amplitudes[i]>0:
                 signal = coswav(frequencies[i],self.__samplerate,self.__duration)
-                signal = np.multiply(signal,amplitudes[i])
+                signal *= amplitudes[i]
                 self.signal += signal
 
     #def fft(self):
