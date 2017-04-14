@@ -347,6 +347,7 @@ class Signal:
         self.__samplerate = samples[0].get_fs()
         self.__duration = len(self.signal)*(1./self.__samplerate)
 
+        # Add each sample to Signal
         for i in range(0,len(samples)):
             sample = samples[i]
             if(not self.instance_of(sample)):
@@ -356,7 +357,7 @@ class Signal:
             # For each synthesised sample: add extra zeros to begin and end
             # To recreate full length of signal (sum of all samples, with overlap!)
             sample.extend(i*step,(len(samples)-1-i)*step)
-            self.add(sample) # not working becose of signal has wrong length, but length was correct at line 342
+            self.add(sample)
 
     def synth(self, frequencies, amplitudes, duration, fs=norm_samplerate):
         # DESCRIPTION : Synthesise a sound
