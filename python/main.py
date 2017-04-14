@@ -45,14 +45,14 @@ new_fs = 44100 # In the end we'll need 48000 sps
 ##### Create envelope
 envelope = Signal()
 envelope.from_sound(ASD_envelope(sample_length,.05,.8,.4,2.4,5,1.5),new_fs)
+#envelope.info()
 #envelope.plot()
 
-##### Synthesise every sample
 synth_samples = []
 for sample in samples:
     #sample.info()
 
-    # Find frequencies for creating the sound with there amplitudes
+    ##### Find frequencies for creating the sound with there amplitudes
     sampleF = FFT(sample)
     try:
         norm_factor = sampleF.normalize()
@@ -63,32 +63,32 @@ for sample in samples:
     #sampleF.plot()
     try:
         frequencies = sampleF.find_freq()
+        amplitudes = sampleF.get_amplitudes(frequencies)
     except Warning: # If no frequencies are found
         frequencies = []
-    try:
-        amplitudes = sampleF.get_amplitudes(frequencies)
-    except Warning: # If no frequencies are given
         amplitudes = []
     #amplitudes *= norm_factor
 
-    # Synthesise the sample
+    ##### Synthesise the sample
     synth = Signal()
-    if(len(frequencies) != 0):
+    try:
         synth.synth(frequencies,amplitudes,sample.get_dur(),new_fs)
-    else:
+    except Warning:
         synth.from_sound(np.zeros(int(round(sample.get_dur()*new_fs))),new_fs)
 
     ##### Add ASD_envelope to synthesised samples
     synth.mul(envelope)
 
-    ##### synthesised sample ready for radding together
+    ##### Synthesised sample ready
     synth_samples.append(synth)
-    #envelope.info()
 
 ###############################################################################
 #                        Put samples together to output                       #
 ###############################################################################
 out = Signal()
+
+# For now sample_length and sample_overlap are the same
+# If sample_rate changes, so will length and overlap!
 out.remake(synth_samples,sample_length,sample_overlap)
 
 

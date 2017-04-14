@@ -44,6 +44,7 @@ class Signal:
             raise ValueError("The start of the signal can't be negative.")
         if ((start+duration) > self.__duration):
             raise ValueError("The signal duration isn't that long.")
+
         self.signal = other.signal[int(start*other.__samplerate):int((start+duration)*other.__samplerate)]
         self.__samplerate = other.__samplerate
         self.__duration = len(self.signal)*(1./self.__samplerate)
@@ -54,6 +55,7 @@ class Signal:
         # RETURN      : None
         if(not self.instance_of(other)):
             raise TypeError("Cannot copy if argument is not of same class (Signal).")
+
         self.signal = other.signal
         self.__samplerate = other.__samplerate
         self.__duration = other.__duration
@@ -80,8 +82,9 @@ class Signal:
             raise ValueError("The start of the signal can't be negative.")
         if (start > end):
             raise ValueError("Please give in correct interval: start <= end.")
+
         sample = Signal()
-        sample.signal = self.signal[int(start*self.__samplerate):int(end*self.__samplerate)]
+        sample.signal = self.signal[int(round(start*self.__samplerate)):int(round(end*self.__samplerate))]
         sample.__samplerate = self.__samplerate
         sample.__duration = end - start
         return sample
@@ -99,10 +102,11 @@ class Signal:
         # DESCRIPTION : Print all information of the Signal instance
         # ARGUMENTS   : None
         # RETURN      : None (and a visual representation of the Signal instance)
-        print("duration: "+str(self.__duration)+" seconds")
-        print("samplerate: "+str(self.__samplerate))
-        print("signal: dtype:"+str(self.signal.dtype)+", len:"+str(len(self.signal)))
-        print("       "+np.array_str(self.signal))
+        print("duration(sec) : "+str(self.__duration))
+        print("samplerate    : "+str(self.__samplerate))
+        print("signal: len   : "+str(len(self.signal)))
+        print("        dtype : "+str(self.signal.dtype))
+        print("        "+np.array_str(self.signal))
 
     def get_fs(self):
         # DESCRIPTION : Get-method to ask the Signal instance the sample rate
@@ -155,17 +159,6 @@ class Signal:
         #               False: otherwise
         return True if isinstance(other, Signal) else False
 
-    def concatenate(self, other):
-        # DESCRIPTION : Concatenate two signals together
-        # ARGUMENTS   : other: the Signal instance that will be added at the end
-        # RETURN      : None
-        if(not self.instance_of(other)):
-            raise TypeError("Cannot concatenate if argument is not of same class (Signal).")
-        if(self.__samplerate != other.__samplerate):
-            raise ValueError("Both signals must have same samplerate.")
-        self.signal = np.concatenate([self.signal,other.signal])
-        self.__duration += other.__duration
-
     def add(self,other):
         # DESCRIPTION : Sommate two signals together
         # ARGUMENTS   : other: the Signal instance that will be sommated
@@ -176,6 +169,7 @@ class Signal:
             raise ValueError("Both signals must have same samplerate.")
         if(len(self.signal) != len(other.signal)):
             raise ValueError("Both signals must have same number of samples.")
+
         self.signal += other.signal
 
     def mul(self,other):
@@ -188,7 +182,17 @@ class Signal:
             raise ValueError("Both signals must have same samplerate.")
         if(len(self.signal) != len(other.signal)):
             raise ValueError("Both signals must have same number of samples.")
-        self.signal = np.multiply(self.signal,other.signal)
+
+        self.signal *= other.signal
+
+    def amplify(self, factor):
+        # DESCRIPTION : Changes amplitude of the signal
+        # ARGUMENTS   : factor: desired amplify factor
+        # RETURN      : None
+        if (factor == 0):
+            raise Warning("Amplifies factor is zero.")
+
+        self.signal *= factor
 
     def cut(self, start, end):
         # DESCRIPTION : Shortens the signal to desired interval
@@ -199,6 +203,7 @@ class Signal:
             raise ValueError("Please give in correct interval: start < end.")
         if (end > self.__duration):
             raise ValueError("The signal duration isn't that long.")
+
         self.signal = self.signal[int(start*self.__samplerate):int(end*self.__samplerate)]
         self.__duration = end - start
 
@@ -209,10 +214,23 @@ class Signal:
         #                        first part of the signal is stored in self
         if (seconds >= self.__duration):
             raise ValueError("The signal duration isn't that long.")
+
         chopped = self.copy()
         chopped.signal = chopped.signal[int(seconds*chopped.__samplerate):]
         self.signal = self.signal[:int(seconds*self.__samplerate)]
         return chopped #Returns last part of the signal
+
+    def concatenate(self, other):
+        # DESCRIPTION : Concatenate two signals together
+        # ARGUMENTS   : other: the Signal instance that will be added at the end
+        # RETURN      : None
+        if(not self.instance_of(other)):
+            raise TypeError("Cannot concatenate if argument is not of same class (Signal).")
+        if(self.__samplerate != other.__samplerate):
+            raise ValueError("Both signals must have same samplerate.")
+
+        self.signal = np.concatenate([self.signal,other.signal])
+        self.__duration += other.__duration
 
     def resample(self, samplerate=norm_samplerate):
         # DESCRIPTION : Changes samplerate of the signal
@@ -221,30 +239,23 @@ class Signal:
         self.__samplerate = samplerate
         self.__duration = len(self.signal)*(1./self.__samplerate)
 
-    def amplify(self, factor):
-        # DESCRIPTION : Changes amplitude of the signal
-        # ARGUMENTS   : factor: desired amplify factor
-        # RETURN      : None
-        if (factor == 0):
-            raise ValueError("Amplifies factor can't be zero")
-        self.signal *= factor
-
     def extend(self, add2front, add2end):
-        # DESCRIPTION : Add extra length to the signal
+        # DESCRIPTION : Add extra length to the signal.
         #               This is done by adding zeros to the start and/or end of the signal
         # ARGUMENTS   : add2front: number of zeros to be added to the front of the signal
         #               add2end: number of zeros to be added to the end of the signal
         # RETURN      : None
         if(add2front == 0 and add2end == 0):
-            print(str(add2front)+" "+str(add2end))
-            raise ValueError("No zeros to add.")
+            raise Warning("No zeros to add.")
         if(add2front < 0 or add2end < 0):
             raise ValueError("Zeros to add can't be negative.")
+
         if(add2front):
             zeros = Signal()
             zeros.from_sound(np.zeros(add2front,dtype=self.signal.dtype),self.__samplerate)
             zeros.concatenate(self) # Adds zeros to the front
             self.copy_from(zeros)   # Get result back into self
+
         if(add2end):
             zeros = Signal()
             zeros.from_sound(np.zeros(add2end,dtype=self.signal.dtype),self.__samplerate)
@@ -274,7 +285,7 @@ class Signal:
         # Add zeros to self_copy to correct to have all full sample_lengths
         short_sample = (self_copy.get_len() - sample_length) % step
         if(short_sample != 0): # Will be 0 if we don't need to add extra
-            zeros2add = sample_length - short_sample
+            zeros2add = step - short_sample
             self_copy.extend(0,zeros2add)
 
         if(extend):
@@ -282,9 +293,9 @@ class Signal:
             self_copy.extend(step,step)
 
         # Calculate how much samples we will have
-        index = self_copy.get_len() - sample_length
-        index /= step
-        index += 1
+        index = self_copy.get_len() - sample_length # Distance of all steps
+        index /= step # number of steps
+        index += 1 # add first sample (before a step)
         #print("Number of samples: "+str(index))
 
         # Create all the samples into an array
@@ -292,7 +303,7 @@ class Signal:
         for i in range (0,index):
             begin = i*step
             end = begin+sample_length
-            #print("--- sample "+str(i)+": ["+str(begin)+","+str(end)+"]  ---")
+            #print("--- sample "+str(i)+": ["+str(begin)+","+str(end)+"[  ---")
             # Need to use append because the size of the array needs to grow
             samples.append(self_copy.get_sample(begin*(1./self_copy.get_fs()),end*(1./self_copy.get_fs())))
             #samples[i].info()
@@ -329,10 +340,11 @@ class Signal:
                 raise TypeError("Sample "+str(i)+" has wrong length.")
             # For each synthesised sample: add extra zeros to begin and end
             # To recreate full length of signal (sum of all samples, with overlap!)
+            print("remake2: "+str(remake.get_len()))
             sample.extend(i*step,(len(samples)-1-i)*step)
             print("sample: "+str(sample.get_len()))
-            print("remake2: "+str(remake.get_len()))
-            remake.add(sample) # not working becose of remake has wrong length, but length was correct at line 322
+            print("remake3: "+str(remake.get_len()))
+            remake.add(sample) # not working becose of remake has wrong length, but length was correct at line 343
 
     def synth(self, frequencies, amplitudes, duration, fs=norm_samplerate):
         # DESCRIPTION : Synthesise a sound
@@ -342,7 +354,7 @@ class Signal:
         #               fs: desired sample rate
         # RETURN      : None
         if (len(frequencies) == 0):
-            raise ValueError("Nothing to synthesise.")
+            raise Warning ("Nothing to synthesise.")
         if (len(frequencies) != len(amplitudes)):
             raise ValueError("Frequencies and amplitues have different length.")
         if (duration <= 0):
@@ -359,7 +371,7 @@ class Signal:
             if amplitudes[i]>0:
                 signal = coswav(frequencies[i],self.__samplerate,self.__duration)
                 signal = np.multiply(signal,amplitudes[i])
-                self.signal =np.add(self.signal, signal)
+                self.signal += signal
 
     #def fft(self):
     #    # Returns FFT of the signal
