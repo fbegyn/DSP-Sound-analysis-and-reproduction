@@ -31,18 +31,17 @@ def stereo2mono(stereo_left,stereo_right):
 ###############################################################################
 #                         Signal generation methodes                          #
 ###############################################################################
-def pulse(numberOfSamples,amplitude):
+def pulse(numberOfSamples,amplitude=1):
 	dirac=np.zeros(numberOfSamples)
 	dirac[numberOfSamples/2]=amplitude
 	return dirac
 
-def pulse(numberOfSamples):
-	return pulse(numberOfSamples,1)
-
-def coswav(f,fs,duur):
-	lengte=fs*duur
-	stap=(2.*pi*f)/(1.*fs)
-	return cos(np.arange(0.,lengte*stap,stap))
+def coswav(f,fs,duration,data_type=np.float64):
+	# Generate array with length = fs*duration
+	array = np.arange(int(round(fs*duration)),dtype=data_type)
+	# omega = 2*pi*f ; step = omega/fs
+	array *= (2.*pi*f)/fs
+	return cos(array)
 
 ###############################################################################
 #                          Plot and print functions                           #
@@ -77,6 +76,14 @@ def hammingWindow(numberOfSamples):
 	return filter
 
 def ASD_envelope(nSamples, tAttack, tRelease, susPlateau, kA, kS, kD): # My example values: (3000,.05,.8,.4,2.4,5,1.5)
+    if(tRelease > 1):
+        raise ValueError("tRelease must be lower than 1.")
+    if(tAttack > tRelease):
+        raise ValueError("tAttack must be lower than tRelease.")
+	if(susPlateau > 1):
+		raise ValueError("Sustain niveau must be lower or equal to 1.")
+    if(kA <= 0 or kS <=0 or kD <= 0):
+        raise ValueError(u"co\u00EBffici\u00EBnts of exponential fuctions must be greater than zero.")
     # Number of samples for each stage
     sA = int( nSamples * tAttack )        # Attack
     sD = int( nSamples * (1.-tRelease) )  # Decay
