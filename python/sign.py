@@ -346,15 +346,13 @@ class Signal:
 
         # Add each sample to Signal
         for i in range(0,len(samples)):
-            sample = samples[i]
-            if(not self.instance_of(sample)):
+            if(not self.instance_of(samples[i])):
                 raise TypeError("Sample "+str(i)+" is not of same class (Signal).")
-            if(sample.get_len() != sample_length):
+            if(samples[i].get_len() != sample_length):
                 raise ValueError("Sample "+str(i)+" has wrong length.")
             # For each synthesised sample: add extra zeros to begin and end
             # To recreate full length of signal (sum of all samples, with overlap!)
-            sample.extend(i*step,signal_length-sample.get_len()-(i*step))
-            self.add(sample)
+            self.signal[(i*step):(i*step)+samples[i].get_len()] = samples[i].signal
 
     def synth(self, frequencies, amplitudes, duration, fs=norm_samplerate):
         # DESCRIPTION : Synthesise a sound

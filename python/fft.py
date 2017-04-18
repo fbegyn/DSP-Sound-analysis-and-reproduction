@@ -55,23 +55,32 @@ class FFT:
         # Delete all noise values lower than 'level'
         self.fft[self.fft<level]=0
 
-    def find_freq(self):
-        # Find the max frequencies of the fft
-        #return argrelmax(self.fft[:len(self.fft)/2],order=2)[0]/2 # Waarom 2e orde?? en waarom nog eens delen door 2?
+    def find_freq(self,max=0):
+        # Find the dominant frequencies of the fft
+        # Limit number of frequencies with variable max (max=0 means no limit)
+        if(max < 0):
+            raise ValueError("Max number must be positive (or at least zero).")
+
         index=argrelmax(self.fft[:len(self.fft)/2],order=1)[0] # Index of the array
         if(len(index) == 0):
             raise Warning("No max frequencies found.")
         frequencies=[]
-        for i in np.nditer(index):
-            # Convert index to frequencies with scaling factor: fs/N
-            frequencies.append(i * self.__samplerate * (1./len(self.fft)))
+        if(len(index) <= max or max == 0): # If max limit will not be met
+            for i in np.nditer(index):
+                # Convert index to frequencies with scaling factor: fs/N
+                frequencies.append(i * self.__samplerate * (1./len(self.fft)))
+        else:                              # If max limit will be met
+            while((len(frequencies) < max) and (len(index) > 0)):
+                index_i=np.argmax(self.fft[index])
+                frequencies.append(index[index_i] * self.__samplerate * (1./len(self.fft)))
+                index=np.delete(index,index_i)
         return frequencies
 
-    def get_amplitudes(self,frequencies):
+    def get_amplitudes(self,frequencies,resize_factor=1):
         if(len(frequencies) == 0):
             raise Warning("No frequencies given.")
         amplitudes = []
         for freq in frequencies:
             # Convert frequencies to index with scaling factor: N/fs
-            amplitudes.append(self.fft[int(freq * len(self.fft) * (1./self.__samplerate))])
+            amplitudes.append(self.fft[int(freq * len(self.fft) * (1./self.__samplerate))]*resize_factor)
         return amplitudes
