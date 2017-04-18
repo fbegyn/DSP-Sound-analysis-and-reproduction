@@ -240,8 +240,7 @@ class Signal:
             raise TypeError("Cannot concatenate if argument is not of same class (Signal).")
         if(self.__samplerate != other.__samplerate):
             raise ValueError("Both signals must have same samplerate.")
-
-        self.signal = np.concatenate([self.signal,other.signal])
+        self.signal = np.concatenate((self.signal,other.signal))
         self.__duration += other.__duration
 
     def resample(self, samplerate=norm_samplerate):
@@ -263,15 +262,10 @@ class Signal:
             raise ValueError("Zeros to add can't be negative.")
 
         if(add2front):
-            zeros = Signal()
-            zeros.from_sound(np.zeros(add2front,dtype=self.signal.dtype),self.__samplerate)
-            zeros.concatenate(self) # Adds zeros to the front
-            self.copy_from(zeros)   # Get result back into self
-
+            self.signal = np.concatenate((np.zeros(add2front,dtype=self.signal.dtype),self.signal))
         if(add2end):
-            zeros = Signal()
-            zeros.from_sound(np.zeros(add2end,dtype=self.signal.dtype),self.__samplerate)
-            self.concatenate(zeros) # Adds zeros to the end
+            self.signal = np.concatenate((self.signal,np.zeros(add2end,dtype=self.signal.dtype)))
+        self.__duration = len(self.signal)*(1./self.__samplerate)
 
     def sampling(self, sample_length, sample_overlap, extend=True):
         # DESCRIPTION : Split the signal into multiple (smaller) signals => samples
@@ -289,8 +283,9 @@ class Signal:
             raise ValueError("Sample overlap must be lower than sample_length.")
 
         step = sample_length - sample_overlap
-        print("    length of samples : "+str(sample_length))
-        print("    overlap of samples : "+str(sample_overlap))
+        print("    Sample settings:")
+        print("      Length of samples : "+str(sample_length))
+        print("      Overlap of samples : "+str(sample_overlap))
 
         # Make a copy of self, so we don't modify original signal
         self_copy = Signal()
@@ -301,16 +296,18 @@ class Signal:
         if(short_sample != 0): # Will be 0 if we don't need to add extra
             zeros2add = step - short_sample
             self_copy.extend(0,zeros2add)
+            print("\n    Added "+str(zeros2add)+" zeros, new length : "+str(self_copy.get_len()))
 
         if(extend):
             # Add zeros so we have an extra sample at the start and end
             self_copy.extend(step,step)
+            print("\n    Extended with 2 samples (2*"+str(step)+" zeros), new length : "+str(self_copy.get_len()))
 
         # Calculate how much samples we will have
         index = self_copy.get_len() - sample_length # Distance of all steps
         index /= step # number of steps
         index += 1 # add first sample (before a step)
-        #print("Number of samples: "+str(index))
+        print("\n    Parsing into "+str(index)+" samples")
 
         # Create all the samples into an array
         samples = []
@@ -356,7 +353,7 @@ class Signal:
                 raise ValueError("Sample "+str(i)+" has wrong length.")
             # For each synthesised sample: add extra zeros to begin and end
             # To recreate full length of signal (sum of all samples, with overlap!)
-            sample.extend(i*step,(len(samples)-1-i)*step)
+            sample.extend(i*step,signal_length-sample.get_len()-(i*step))
             self.add(sample)
 
     def synth(self, frequencies, amplitudes, duration, fs=norm_samplerate):
