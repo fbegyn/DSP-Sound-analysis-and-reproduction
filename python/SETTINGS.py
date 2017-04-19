@@ -17,15 +17,15 @@ CUT_INPUT_END = 1.58
 ###############################################################################
 #                                   Sampling                                  #
 ###############################################################################
-SAMPLE_LENGTH = 352
-SAMPLE_OVERLAP = 0
+SAMPLE_LENGTH = 352 #8ms
+SAMPLE_OVERLAP = 10
 
 ###############################################################################
 #                                  Synthesise                                 #
 ###############################################################################
 # Change the sample rate
 # In the end we'll need 48000 sps
-NEW_FS = 44100 # We can't change this yet! (not fully implemented)
+NEW_FS = 48000
 
 # Maximum number of frequencies used to recreate sound
 # set to zero to disable limit
