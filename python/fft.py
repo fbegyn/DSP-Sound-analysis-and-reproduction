@@ -8,10 +8,14 @@ class FFT:
     ###########################################################################
     #                          Signal input methodes                          #
     ###########################################################################
-    def __init__(self, Signal):
+    def __init__(self, Signal, zero_padding=0):
+        if(zero_padding <0):
+            raise ValueError("zero_padding can't be negative")
         self.__signal = Signal.signal
+        if(zero_padding):
+            self.__signal = np.concatenate((self.__signal,np.zeros(zero_padding,dtype=self.__signal.dtype)))
         self.__samplerate = Signal.get_fs()
-        self.fft = abs(fft(self.__signal))
+        self.fft = np.absolute(fft(self.__signal))
 
     ###########################################################################
     #                         Signal output methodes                          #
@@ -82,5 +86,5 @@ class FFT:
         amplitudes = []
         for freq in frequencies:
             # Convert frequencies to index with scaling factor: N/fs
-            amplitudes.append(self.fft[int(freq * len(self.fft) * (1./self.__samplerate))]*resize_factor)
-        return amplitudes
+            amplitudes.append(self.fft[int(freq * len(self.fft) * (1./self.__samplerate))]*(2./len(self.__signal))*resize_factor)
+        return amplitudes # Power to amplitude: P ~ A*A
