@@ -29,3 +29,4 @@ School project aiming towards sound decoding and reproduction in python.
 * https://www.microsoft.com/en-us/research/wp-content/uploads/2016/07/ParametricWaveField.pdf
 * http://www.img.lx.it.pt/pcs2007/presentations/JurgenHere_Sound_Images.pdf
 * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.95.2415&rep=rep1&type=pdf Vnf pagina 18
+* http://www.phy.mtu.edu/~suits/phaseshifts.html
