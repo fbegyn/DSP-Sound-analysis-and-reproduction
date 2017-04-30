@@ -5,8 +5,8 @@
 #                            Input of sample sound                            #
 ###############################################################################
 # File location
-INPUT_DIRECTORY='sampleSounds/'
-INPUT_FILENAME='galop02.wav'
+INPUT_DIRECTORY = 'sampleSounds/'
+INPUT_FILENAME = 'galop02.wav'
 
 # Pick a sample out of the input sound
 # Change CUT_INPUT to False to disable
@@ -17,7 +17,7 @@ CUT_INPUT_END = 1.58
 ###############################################################################
 #                                   Sampling                                  #
 ###############################################################################
-SAMPLE_LENGTH = 352 #8ms
+SAMPLE_LENGTH = 352  # 8ms
 SAMPLE_OVERLAP = 10
 
 ###############################################################################
@@ -35,5 +35,5 @@ MAX_FREQUENCIES = 0
 #                        Put samples together to output                       #
 ###############################################################################
 # File location
-OUTPUT_DIRECTORY='testOutputs/'
-OUTPUT_FILENAME='synthesised.wav'
+OUTPUT_DIRECTORY = 'testOutputs/'
+OUTPUT_FILENAME = 'synthesised.wav'
