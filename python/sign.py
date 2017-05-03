@@ -204,10 +204,10 @@ class Signal:
         # TODO: Should peak-find near each one, not just assume that fundamental was perfectly estimated.
         # Instead of limited to 15, figure out how many fit based on f0 and sampling rate and report this "4 harmonics" and list the strength of each
         print('\n  -- Harmonischen ---')
-        for x in range(2, 15):
+        for x in range(2, 8):
             print '%.3f' % abs(f[i * x])
 
-        THD = sum([abs(f[i*x]) for x in range(2,15)]) / abs(f[i])
+        THD = sum([abs(f[i*x]) for x in range(2,8)]) / abs(f[i])
         print '\nTHD: %f%%' % (THD * 100),
         print '\n ----- Grondtoon -----'
         print self.__samplerate * i_peak / N
