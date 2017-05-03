@@ -21,8 +21,8 @@ inp.info()
 # inp.spectrogram()
 # inp.plotfft()
 print('\n--------- Grondtonen ------------')
-inp.freq_from_fft()
-inp.freq_from_hps()
+f_parameter = inp.freq_from_fft()
+#inp.freq_from_hps()
 
 # Pick a sample out of the input sound (so it's not so big, but yet a full
 # sound)
@@ -116,8 +116,6 @@ out.info()
 print("\n    [DONE] Merged " + str(len(synth_samples)) + " samples into one\n")
 out.write_file(OUTPUT_DIRECTORY + OUTPUT_FILENAME)
 out.freq_from_fft()
-out.freq_from_hps()
 # out.spectrogram()
-
-
+print('\n -------- testje -------')
 ### End Of File ###

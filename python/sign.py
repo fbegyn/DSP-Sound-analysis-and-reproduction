@@ -10,6 +10,7 @@ from scipy.signal import fftconvolve, kaiser, decimate
 from time import time
 
 import numpy as np
+import itertools
 
 class Signal:
     norm_samplerate = 44100
@@ -203,16 +204,22 @@ class Signal:
         # Find the values for the first 15 harmonics.  Includes harmonic peaks only, by definition
         # TODO: Should peak-find near each one, not just assume that fundamental was perfectly estimated.
         # Instead of limited to 15, figure out how many fit based on f0 and sampling rate and report this "4 harmonics" and list the strength of each
+        freqs = np.zeros(6)
         print('\n  -- Harmonischen ---')
+        i = 0
         for x in range(2, 8):
-            print '%.3f' % abs(f[i * x])
+            freqs[i] = abs(f[i * x])
+            print(freqs)
+            i += 1
+
 
         THD = sum([abs(f[i*x]) for x in range(2,8)]) / abs(f[i])
         print '\nTHD: %f%%' % (THD * 100),
         print '\n ----- Grondtoon -----'
-        print self.__samplerate * i_peak / N
+        ground = np.array(self.__samplerate * i_peak / N)
+        print(ground)
         # Convert to equivalent frequency
-        return# self.__samplerate * i_peak / N  # Hz
+        return np.hstack((ground,freqs))
 
 
     def freq_from_autocorr(self):
