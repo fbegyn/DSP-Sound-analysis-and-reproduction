@@ -1,10 +1,21 @@
+from __future__ import division
 from functions import *
 from fft import *
-import numpy as np
+#from common import parabolic
+#from common import parabolic as parabolic
+from numpy.fft import rfft
+from numpy import argmax, mean, diff, log, copy, arange
+from matplotlib.mlab import find
+from scipy.signal import fftconvolve, kaiser, decimate
+from time import time
 
+import numpy as np
 
 class Signal:
     norm_samplerate = 44100
+
+    def __init__(self):
+		return None
 
     ###########################################################################
     #                          Signal input methodes                          #
@@ -169,6 +180,98 @@ class Signal:
         #               False: otherwise
         return True if isinstance(other, Signal) else False
 
+    def freq_from_fft(self):
+        """Estimate frequency from peak of FFT
+        Pros: Accurate, usually even more so than zero crossing counter
+        (1000.000004 Hz for 1000 Hz, for instance).  Due to parabolic
+        interpolation being a very good fit for windowed log FFT peaks?
+        https://ccrma.stanford.edu/~jos/sasp/Quadratic_Interpolation_Spectral_Peaks.html
+        Accuracy also increases with signal length
+        Cons: Doesn't find the right value if harmonics are stronger than
+        fundamental, which is common.
+        """
+        N = len(self.signal)
+
+        # Compute Fourier transform of windowed signal
+        windowed = self.signal * kaiser(N, 100)
+        f = rfft(windowed)
+        i = argmax(abs(f))
+        # Find the peak and interpolate to get a more accurate peak
+        i_peak = argmax(abs(f))  # Just use this value for less-accurate result
+        #i_interp = parabolic(log(abs(f)), i_peak)[0]
+
+        # Find the values for the first 15 harmonics.  Includes harmonic peaks only, by definition
+        # TODO: Should peak-find near each one, not just assume that fundamental was perfectly estimated.
+        # Instead of limited to 15, figure out how many fit based on f0 and sampling rate and report this "4 harmonics" and list the strength of each
+        print('\n  -- Harmonischen ---')
+        for x in range(2, 15):
+            print '%.3f' % abs(f[i * x])
+
+        THD = sum([abs(f[i*x]) for x in range(2,15)]) / abs(f[i])
+        print '\nTHD: %f%%' % (THD * 100),
+        print '\n ----- Grondtoon -----'
+        print self.__samplerate * i_peak / N
+        # Convert to equivalent frequency
+        return# self.__samplerate * i_peak / N  # Hz
+
+
+    def freq_from_autocorr(self):
+        """Estimate frequency using autocorrelation
+        Pros: Best method for finding the true fundamental of any repeating wave,
+        even with strong harmonics or completely missing fundamental
+        Cons: Not as accurate, doesn't work for inharmonic things like musical
+        instruments, this implementation has trouble with finding the true peak
+        """
+        # Calculate autocorrelation (same thing as convolution, but with one input
+        # reversed in time), and throw away the negative lags
+        #self.signal -= mean(self.signal)  # Remove DC offset
+        corr = fftconvolve(self.signal, self.signal[::-1], mode='full')
+        corr = corr[int(len(corr)/2):]
+
+        # Find the first low point
+        d = diff(corr)
+        start = find(d > 0)[0]
+
+        # Find the next peak after the low point (other than 0 lag).  This bit is
+        # not reliable for long signals, due to the desired peak occurring between
+        # samples, and other peaks appearing higher.
+        i_peak = argmax(corr[start:]) + start
+        #i_interp = parabolic(corr, i_peak)[0]
+        print ''
+        print '\n ------- Grondtoon -----'
+        print self.__samplerate / i_peak
+        return
+
+    def freq_from_hps(self):
+        """Estimate frequency using harmonic product spectrum
+        Low frequency noise piles up and overwhelms the desired peaks
+        """
+
+        N = len(self.signal)
+        #self.signal -= mean(self.signal)  # Remove DC offset
+
+        # Compute Fourier transform of windowed signal
+        windowed = self.signal * kaiser(N, 100)
+
+        # Get spectrum
+        X = log(abs(rfft(windowed)))
+
+        # Downsample sum logs of spectra instead of multiplying
+        hps = copy(X)
+        for h in arange(2, 15): # TODO: choose a smarter upper limit
+            dec = decimate(X, h,zero_phase=False)
+            hps[:len(dec)] += dec
+
+        # Find the peak and interpolate to get a more accurate peak
+        i_peak = argmax(hps[:len(dec)])
+        #i_interp = parabolic(hps, i_peak)[0]
+
+        # Convert to equivalent frequency
+        print ''
+        print '\n ------- Grondtoon -----'
+        print self.__samplerate * i_peak / N  # Hz
+        return
+
     def to_int16(self):
         # DESCRIPTION : Changes dtype of signal to int16 and rounds correctly (not floor)
         # ARGUMENTS   : None
@@ -330,7 +433,7 @@ class Signal:
 
         # Create all the samples into an array
         samples = []
-        for i in range(0, index):
+        for i in range(0, int(index)):
             begin = i * step
             end = begin + sample_length
             #print("    Sample "+str(i)+":\t["+str(begin)+","+str(end)+"[")

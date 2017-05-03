@@ -1,7 +1,6 @@
 from functions import *
 from sign import *
 from fft import *
-
 import numpy as np
 
 # File with synthesise settings
@@ -21,6 +20,9 @@ print("\n  ---------- INPUT FILE ----------")
 inp.info()
 # inp.spectrogram()
 # inp.plotfft()
+print('\n--------- Grondtonen ------------')
+inp.freq_from_fft()
+inp.freq_from_hps()
 
 # Pick a sample out of the input sound (so it's not so big, but yet a full
 # sound)
@@ -113,6 +115,8 @@ if(out.signal.dtype != np.int16):
 out.info()
 print("\n    [DONE] Merged " + str(len(synth_samples)) + " samples into one\n")
 out.write_file(OUTPUT_DIRECTORY + OUTPUT_FILENAME)
+out.freq_from_fft()
+out.freq_from_hps()
 # out.spectrogram()
 
 
