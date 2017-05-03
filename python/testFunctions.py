@@ -1,3 +1,4 @@
+!#/usr/bin/python2
 from functions import *
 from sign import *
 from fft import *
@@ -61,7 +62,7 @@ for i in range(0, len(samples)):
         print("    Sample " + str(i) + " has no contents")
         frequencies = []
         amplitudes = []
-        
+
     # Synthesise the sample
     synth = Signal()
     try:
