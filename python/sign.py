@@ -1,22 +1,30 @@
 from __future__ import division
+#from common import parabolic
+#from common import parabolic as parabolic.
+from time import time
+import itertools
+# Numpy
+import numpy as np
+from numpy import argmax, mean, diff, log, copy, arange
+from numpy.fft import rfft
+# Matplotlib
+from matplotlib.mlab import find
+# Scipy
+from scipy.io import wavfile
+from scipy.signal import fftconvolve, kaiser, decimate
+# Other files
 from functions import *
 from fft import *
-#from common import parabolic
-#from common import parabolic as parabolic
-from numpy.fft import rfft
-from numpy import argmax, mean, diff, log, copy, arange
-from matplotlib.mlab import find
-from scipy.signal import fftconvolve, kaiser, decimate
-from time import time
-
-import numpy as np
-import itertools
 
 class Signal:
     norm_samplerate = 44100
 
     def __init__(self):
 		return None
+
+    def __del__(self):
+        # print("Deleted a signal istance.")
+        return None
 
     ###########################################################################
     #                          Signal input methodes                          #
@@ -27,7 +35,7 @@ class Signal:
         # ARGUMENTS   : filename: string to filename
         # RETURN      : None
         if filename:
-            self.__samplerate, self.signal = wavread(filename)
+            self.__samplerate, self.signal = wavfile.read(filename)
             if (self.signal.ndim == 2):  # check if stereo, convert to mono
                 self.signal = stereo2mono(self.signal[:, 0], self.signal[:, 1])
             self.__duration = len(self.signal) * (1. / self.__samplerate)
@@ -40,7 +48,9 @@ class Signal:
         #               start: index of np.array sound
         #               end: index of np.array sound
         # RETURN      : None
-        self.signal = sound[start:end]
+        if (end == None):
+            end = len(sound)
+        self.signal = np.copy(sound[start:end])
         self.__samplerate = fs
         self.__duration = len(self.signal) * (1. / self.__samplerate)
 
@@ -59,8 +69,8 @@ class Signal:
         if ((start + duration) > self.__duration):
             raise ValueError("The signal duration isn't that long.")
 
-        self.signal = other.signal[int(
-            start * other.__samplerate):int((start + duration) * other.__samplerate)]
+        self.signal = np.copy(other.signal[int(round(start * other.__samplerate))
+            :int(round((start + duration) * other.__samplerate))])
         self.__samplerate = other.__samplerate
         self.__duration = len(self.signal) * (1. / self.__samplerate)
 
@@ -72,7 +82,7 @@ class Signal:
             raise TypeError(
                 "Cannot copy if argument is not of same class (Signal).")
 
-        self.signal = other.signal
+        self.signal = np.copy(other.signal)
         self.__samplerate = other.__samplerate
         self.__duration = other.__duration
 
@@ -100,8 +110,8 @@ class Signal:
             raise ValueError("Please give in correct interval: start <= end.")
 
         sample = Signal()
-        sample.signal = self.signal[int(
-            round(start * self.__samplerate)):int(round(end * self.__samplerate))]
+        sample.signal = np.copy(self.signal[int(round(
+            start * self.__samplerate)):int(round(end * self.__samplerate))])
         sample.__samplerate = self.__samplerate
         sample.__duration = end - start
         return sample
@@ -110,9 +120,11 @@ class Signal:
         # DESCRIPTION : Generate a .wav file containing the sound of the signal
         # ARGUMENTS   : filename: string of output file
         # RETURN      : None (and a .wav output file)
-        if(self.signal.dtype != np.int16):
-            self.to_int16()
-        wavwrite(filename, self.__samplerate, self.signal)
+        self_copy = Signal()
+        self_copy.copy_from(self)
+        self_copy.signal = self_copy.signal / max(np.fabs(self_copy.signal)) * 32767
+        self_copy.to_int16()
+        wavfile.write(filename, self.__samplerate, self_copy.signal)
 
     ###########################################################################
     #                            Information output                           #
@@ -181,104 +193,6 @@ class Signal:
         #               False: otherwise
         return True if isinstance(other, Signal) else False
 
-    def freq_from_fft(self):
-        """Estimate frequency from peak of FFT
-        Pros: Accurate, usually even more so than zero crossing counter
-        (1000.000004 Hz for 1000 Hz, for instance).  Due to parabolic
-        interpolation being a very good fit for windowed log FFT peaks?
-        https://ccrma.stanford.edu/~jos/sasp/Quadratic_Interpolation_Spectral_Peaks.html
-        Accuracy also increases with signal length
-        Cons: Doesn't find the right value if harmonics are stronger than
-        fundamental, which is common.
-        """
-        N = len(self.signal)
-
-        # Compute Fourier transform of windowed signal
-        windowed = self.signal * kaiser(N, 100)
-        f = rfft(windowed)
-        i = argmax(abs(f))
-        # Find the peak and interpolate to get a more accurate peak
-        i_peak = argmax(abs(f))  # Just use this value for less-accurate result
-        #i_interp = parabolic(log(abs(f)), i_peak)[0]
-
-        # Find the values for the first 15 harmonics.  Includes harmonic peaks only, by definition
-        # TODO: Should peak-find near each one, not just assume that fundamental was perfectly estimated.
-        # Instead of limited to 15, figure out how many fit based on f0 and sampling rate and report this "4 harmonics" and list the strength of each
-        freqs = np.zeros(6)
-        print('\n  -- Harmonischen ---')
-        i = 0
-        for x in range(2, 8):
-            freqs[i] = abs(f[i * x])
-            print(freqs)
-            i += 1
-
-
-        THD = sum([abs(f[i*x]) for x in range(2,8)]) / abs(f[i])
-        print '\nTHD: %f%%' % (THD * 100),
-        print '\n ----- Grondtoon -----'
-        ground = np.array(self.__samplerate * i_peak / N)
-        print(ground)
-        # Convert to equivalent frequency
-        return np.hstack((ground,freqs))
-
-
-    def freq_from_autocorr(self):
-        """Estimate frequency using autocorrelation
-        Pros: Best method for finding the true fundamental of any repeating wave,
-        even with strong harmonics or completely missing fundamental
-        Cons: Not as accurate, doesn't work for inharmonic things like musical
-        instruments, this implementation has trouble with finding the true peak
-        """
-        # Calculate autocorrelation (same thing as convolution, but with one input
-        # reversed in time), and throw away the negative lags
-        #self.signal -= mean(self.signal)  # Remove DC offset
-        corr = fftconvolve(self.signal, self.signal[::-1], mode='full')
-        corr = corr[int(len(corr)/2):]
-
-        # Find the first low point
-        d = diff(corr)
-        start = find(d > 0)[0]
-
-        # Find the next peak after the low point (other than 0 lag).  This bit is
-        # not reliable for long signals, due to the desired peak occurring between
-        # samples, and other peaks appearing higher.
-        i_peak = argmax(corr[start:]) + start
-        #i_interp = parabolic(corr, i_peak)[0]
-        print ''
-        print '\n ------- Grondtoon -----'
-        print self.__samplerate / i_peak
-        return
-
-    def freq_from_hps(self):
-        """Estimate frequency using harmonic product spectrum
-        Low frequency noise piles up and overwhelms the desired peaks
-        """
-
-        N = len(self.signal)
-        #self.signal -= mean(self.signal)  # Remove DC offset
-
-        # Compute Fourier transform of windowed signal
-        windowed = self.signal * kaiser(N, 100)
-
-        # Get spectrum
-        X = log(abs(rfft(windowed)))
-
-        # Downsample sum logs of spectra instead of multiplying
-        hps = copy(X)
-        for h in arange(2, 15): # TODO: choose a smarter upper limit
-            dec = decimate(X, h,zero_phase=False)
-            hps[:len(dec)] += dec
-
-        # Find the peak and interpolate to get a more accurate peak
-        i_peak = argmax(hps[:len(dec)])
-        #i_interp = parabolic(hps, i_peak)[0]
-
-        # Convert to equivalent frequency
-        print ''
-        print '\n ------- Grondtoon -----'
-        print self.__samplerate * i_peak / N  # Hz
-        return
-
     def to_int16(self):
         # DESCRIPTION : Changes dtype of signal to int16 and rounds correctly (not floor)
         # ARGUMENTS   : None
@@ -301,7 +215,7 @@ class Signal:
         if(len(self.signal) != len(other.signal)):
             raise ValueError("Both signals must have same number of samples.")
 
-        self.signal += other.signal
+        self.signal = np.add(self.signal,np.copy(other.signal))
 
     def mul(self, other):
         # DESCRIPTION : Multiply two signals together
@@ -315,7 +229,7 @@ class Signal:
         if(len(self.signal) != len(other.signal)):
             raise ValueError("Both signals must have same number of samples.")
 
-        self.signal *= other.signal
+        self.signal = np.multiply(self.signal,np.copy(other.signal))
 
     def amplify(self, factor):
         # DESCRIPTION : Changes amplitude of the signal
@@ -362,7 +276,7 @@ class Signal:
                 "Cannot concatenate if argument is not of same class (Signal).")
         if(self.__samplerate != other.__samplerate):
             raise ValueError("Both signals must have same samplerate.")
-        self.signal = np.concatenate((self.signal, other.signal))
+        self.signal = np.concatenate((self.signal, np.copy(other.signal)))
         self.__duration += other.__duration
 
     def resample(self, samplerate=norm_samplerate):
@@ -390,6 +304,103 @@ class Signal:
             self.signal = np.concatenate(
                 (self.signal, np.zeros(add2end, dtype=self.signal.dtype)))
         self.__duration = len(self.signal) * (1. / self.__samplerate)
+
+    def freq_from_fft(self):
+        """Estimate frequency from peak of FFT
+        Pros: Accurate, usually even more so than zero crossing counter
+        (1000.000004 Hz for 1000 Hz, for instance).  Due to parabolic
+        interpolation being a very good fit for windowed log FFT peaks?
+        https://ccrma.stanford.edu/~jos/sasp/Quadratic_Interpolation_Spectral_Peaks.html
+        Accuracy also increases with signal length
+        Cons: Doesn't find the right value if harmonics are stronger than
+        fundamental, which is common.
+        """
+        N = len(self.signal)
+
+        # Compute Fourier transform of windowed signal
+        windowed = np.copy(self.signal) * kaiser(N, 100)
+        f = rfft(windowed)
+        i = argmax(abs(f))
+        # Find the peak and interpolate to get a more accurate peak
+        i_peak = argmax(abs(f))  # Just use this value for less-accurate result
+        #i_interp = parabolic(log(abs(f)), i_peak)[0]
+
+        # Find the values for the first 15 harmonics.  Includes harmonic peaks only, by definition
+        # TODO: Should peak-find near each one, not just assume that fundamental was perfectly estimated.
+        # Instead of limited to 15, figure out how many fit based on f0 and sampling rate and report this "4 harmonics" and list the strength of each
+        freqs = np.zeros(6)
+        print('\n  -- Harmonischen ---')
+        i = 0
+        for x in range(2, 8):
+            freqs[i] = abs(f[i * x])
+            print(freqs)
+            i += 1
+
+
+        THD = sum([abs(f[i*x]) for x in range(2,8)]) / abs(f[i])
+        print '\nTHD: %f%%' % (THD * 100),
+        print '\n ----- Grondtoon -----'
+        ground = np.array(self.__samplerate * i_peak / N)
+        print(ground)
+        # Convert to equivalent frequency
+        return np.hstack((ground,freqs))
+
+    def freq_from_autocorr(self):
+        """Estimate frequency using autocorrelation
+        Pros: Best method for finding the true fundamental of any repeating wave,
+        even with strong harmonics or completely missing fundamental
+        Cons: Not as accurate, doesn't work for inharmonic things like musical
+        instruments, this implementation has trouble with finding the true peak
+        """
+        # Calculate autocorrelation (same thing as convolution, but with one input
+        # reversed in time), and throw away the negative lags
+        #self.signal -= mean(self.signal)  # Remove DC offset
+        corr = fftconvolve(np.copy(self.signal), np.copy(self.signal)[::-1], mode='full')
+        corr = corr[int(len(corr)/2):]
+
+        # Find the first low point
+        d = diff(corr)
+        start = find(d > 0)[0]
+
+        # Find the next peak after the low point (other than 0 lag).  This bit is
+        # not reliable for long signals, due to the desired peak occurring between
+        # samples, and other peaks appearing higher.
+        i_peak = argmax(corr[start:]) + start
+        #i_interp = parabolic(corr, i_peak)[0]
+        print ''
+        print '\n ------- Grondtoon -----'
+        print self.__samplerate / i_peak
+        return
+
+    def freq_from_hps(self):
+        """Estimate frequency using harmonic product spectrum
+        Low frequency noise piles up and overwhelms the desired peaks
+        """
+
+        N = len(self.signal)
+        #self.signal -= mean(self.signal)  # Remove DC offset
+
+        # Compute Fourier transform of windowed signal
+        windowed = np.copy(self.signal) * kaiser(N, 100)
+
+        # Get spectrum
+        X = log(abs(rfft(windowed)))
+
+        # Downsample sum logs of spectra instead of multiplying
+        hps = copy(X)
+        for h in arange(2, 15): # TODO: choose a smarter upper limit
+            dec = decimate(X, h,zero_phase=False)
+            hps[:len(dec)] += dec
+
+        # Find the peak and interpolate to get a more accurate peak
+        i_peak = argmax(hps[:len(dec)])
+        #i_interp = parabolic(hps, i_peak)[0]
+
+        # Convert to equivalent frequency
+        print ''
+        print '\n ------- Grondtoon -----'
+        print self.__samplerate * i_peak / N  # Hz
+        return
 
     def sampling(self, sample_length, sample_overlap, extend=True):
         # DESCRIPTION : Split the signal into multiple (smaller) signals => samples

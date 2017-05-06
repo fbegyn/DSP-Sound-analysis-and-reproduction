@@ -1,11 +1,12 @@
-!#/usr/bin/python2
+# File with synthesise settings
+from SETTINGS import *
+# Files with methodes
 from functions import *
 from sign import *
 from fft import *
-import numpy as np
 
-# File with synthesise settings
-from SETTINGS import *
+# Libraries
+import numpy as np
 
 """ Synthesising a signal (by Francis Begyn and Laurens Scheldeman) """
 
@@ -21,12 +22,8 @@ print("\n  ---------- INPUT FILE ----------")
 inp.info()
 # inp.spectrogram()
 # inp.plotfft()
-print('\n--------- Grondtonen ------------')
-f_parameter = inp.freq_from_fft()
-#inp.freq_from_hps()
 
-# Pick a sample out of the input sound (so it's not so big, but yet a full
-# sound)
+# Pick a sample out of the input sound (like 1 step of the gallop)
 if (CUT_INPUT):
     print("\n    Pick a sound out of the input file")
     # twice the sound, could be bigger, but faster to test
@@ -36,6 +33,11 @@ if (CUT_INPUT):
 print("\n    [DONE] Input file ready to be synthesised")
 # inp.spectrogram()
 # inp.plotfft()
+
+print('\n--------- Grondtonen ------------')
+f_parameter = inp.freq_from_fft()
+#inp.freq_from_hps()
+
 
 ###############################################################################
 #                                   Sampling                                  #
