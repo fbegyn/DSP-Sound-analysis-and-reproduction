@@ -1,4 +1,4 @@
-!#/usr/bin/python2
+#!/usr/bin/python2
 from functions import *
 from sign import *
 from fft import *
@@ -46,22 +46,7 @@ for i in range(0, len(samples)):
     # sample.info()
 
     # Find frequencies for creating the sound with there amplitudes
-    sampleF = FFT(sample, 10000)
-
-    try:
-        norm_factor = sampleF.normalize()
-    except ValueError:  # Catching already normalized
-                       # Catching dividing by 0 if no max found
-        norm_factor = 1
-    sampleF.clean_noise(.2)
-    # sampleF.plot()
-    try:
-        #frequencies = sampleF.find_freq(MAX_FREQUENCIES)
-        amplitudes = sampleF.get_amplitudes(f_parameter, norm_factor)
-    except Warning:  # If no frequencies are found
-        print("    Sample " + str(i) + " has no contents")
-        frequencies = []
-        amplitudes = []
+    amplitudes = sample.get_ampl(f_parameter)
 
     # Synthesise the sample
     synth = Signal()

@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 from __future__ import division
 #from common import parabolic
 #from common import parabolic as parabolic.
@@ -325,7 +326,7 @@ class Signal:
         i_peak = argmax(abs(f))  # Just use this value for less-accurate result
         #i_interp = parabolic(log(abs(f)), i_peak)[0]
 
-        # Find the values for the first 15 harmonics.  Includes harmonic peaks only, by definition
+        # Find the values for the first x harmonics.  Includes harmonic peaks only, by definition
         # TODO: Should peak-find near each one, not just assume that fundamental was perfectly estimated.
         # Instead of limited to 15, figure out how many fit based on f0 and sampling rate and report this "4 harmonics" and list the strength of each
         freqs = np.zeros(6)
@@ -333,17 +334,39 @@ class Signal:
         i = 0
         for x in range(2, 8):
             freqs[i] = abs(f[i * x])
-            print(freqs)
             i += 1
 
+        print(freqs)
 
-        THD = sum([abs(f[i*x]) for x in range(2,8)]) / abs(f[i])
+        THD = sum([abs(f[i*x]) for x in range(2, 8)]) / abs(f[i])
         print '\nTHD: %f%%' % (THD * 100),
         print '\n ----- Grondtoon -----'
         ground = np.array(self.__samplerate * i_peak / N)
         print(ground)
         # Convert to equivalent frequency
         return np.hstack((ground,freqs))
+
+    def get_ampl(self, freqs):
+        """Find the corresponding amplitudes
+        Returns the amplitudes that match the frequencies given to the function
+        """
+        signFFT = FFT(self)
+
+        try:
+            norm_factor = signFFT.normalize()
+        except ValueError:  # Catching already normalized
+                            # Catching dividing by 0 if no max found
+            norm_factor = 1
+        signFFT.clean_noise(.2)
+
+        try:
+            amplitudes = signFFT.get_amplitudes(freqs, norm_factor)
+        except Warning:
+            print("    Sample " + str(i) + " has no contents")
+            frequencies = []
+            amplitudes = []
+
+        return amplitudes
 
     def freq_from_autocorr(self):
         """Estimate frequency using autocorrelation
@@ -389,7 +412,7 @@ class Signal:
         # Downsample sum logs of spectra instead of multiplying
         hps = copy(X)
         for h in arange(2, 15): # TODO: choose a smarter upper limit
-            dec = decimate(X, h,zero_phase=False)
+            dec = decimate(X, h, zero_phase=False)
             hps[:len(dec)] += dec
 
         # Find the peak and interpolate to get a more accurate peak

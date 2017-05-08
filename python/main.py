@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 # File with synthesise settings
 from SETTINGS import *
 # Files with methodes
