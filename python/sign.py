@@ -13,10 +13,11 @@ from matplotlib.mlab import find
 # Scipy
 from scipy import optimize
 from scipy.io import wavfile
-from scipy.signal import fftconvolve, kaiser, decimate, argrelmax
+from scipy.signal import fftconvolve, kaiser, decimate, argrelmax, blackmanharris
 # Other files
 from functions import *
 from fft import *
+import operator
 
 class Signal:
     norm_samplerate = 44100
@@ -309,10 +310,10 @@ class Signal:
         self.__duration = len(self.signal) * (1. / self.__samplerate)
 
     def freq_from_fft(self, envelope, factor, f_treshold, a_treshold):
-        help = np.copy(self.signal) * envelope
+        help = np.copy(self.signal) * blackmanharris(len(self.signal))
 
         # Compute Fourier transform of enveloped signal
-        f = np.abs(rfft(help))
+        f = np.abs(fft(help))
 
         k = int(44100 / factor)
 
@@ -320,18 +321,25 @@ class Signal:
 
         f[f < f_treshold] = 0
 
-        freqs = []
-        ampl = []
+        parameters = dict()
+        fundamentals = []
 
         for i in range(k, len(f)-k):
             frequency = argmax(f[i-k:i+k+1])*44100 * (1. / len(f))
             if frequency > 0:
-                freqs.append(frequency)
-                ampl.append(np.square(f[int( \
-                    freqs[-1] * len(f) * (1. / 44100))] * \
-                    (2. / len(help))))
+                parameters[frequency] = np.square(f[int( \
+                    frequency * len(f) * (1. / 44100))] * \
+                    (2. / len(help)))
 
-        return freqs[::100], ampl[::100]
+        parameters_sorted = sorted(parameters.items(), key=operator.itemgetter(1))
+
+        for j in range(0, 3):
+            fundamentals.append(parameters_sorted.pop())
+            for i in range(2, 5):
+                if fundamentals[j][0]*i in parameters:
+                    fundamentals.append((fundamentals[j][0]*i, \
+                        parameters.pop(fundamentals[j][0]*i)))
+        return fundamentals
 
     def make_envelope(self, factor, treshold):
         """Creates an envelope over the signal
