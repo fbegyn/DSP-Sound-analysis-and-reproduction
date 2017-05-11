@@ -308,27 +308,32 @@ class Signal:
                 (self.signal, np.zeros(add2end, dtype=self.signal.dtype)))
         self.__duration = len(self.signal) * (1. / self.__samplerate)
 
-    def freq_from_fft(self, factor, treshold):
-        N = len(self.signal)
+    def freq_from_fft(self, envelope, factor, f_treshold, a_treshold):
+        help = np.copy(self.signal) * envelope
 
-        # Compute Fourier transform of windowed signal
-        windowed = np.copy(self.signal) * kaiser(N, 100)
-        f = np.abs(rfft(windowed))
-        #j = argrelmax(abs(f))[0]
-        #j = np.multiply(j,44100 * (1. / len(f)))
+        # Compute Fourier transform of enveloped signal
+        f = np.abs(rfft(help))
+
+        
 
         k = int(44100 / factor)
 
         #f[np.where(f < treshold)] = 0
 
-        f[f < treshold] = 0
+        f[f < f_treshold] = 0
 
-        freqs = np.zeros(len(windowed))
+        freqs = []
+        ampl = []
 
         for i in range(k, len(f)-k):
-            freqs[i] = argmax(f[i-k:i+k+1])*44100 * (1. / len(f))
+            frequency = argmax(f[i-k:i+k+1])*44100 * (1. / len(f))
+            if frequency > 0:
+                freqs.append(frequency)
+                ampl.append(np.square(f[int( \
+                    freqs[-1] * len(f) * (1. / 44100))] * \
+                    (2. / len(help))))
 
-        return freqs[np.where(freqs > 0)]
+        return freqs, ampl
 
     def make_envelope(self, factor, treshold):
         """Creates an envelope over the signal
@@ -349,7 +354,7 @@ class Signal:
 
         ypoints[np.where(ypoints < treshold)] = 0
 
-        return ypoints, windowed
+        return (1. * ypoints)/max(ypoints), windowed
 
     def sampling(self, sample_length, sample_overlap, extend=True):
         # DESCRIPTION : Split the signal into multiple (smaller) signals => samples
