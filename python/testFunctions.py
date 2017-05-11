@@ -16,70 +16,35 @@ from SETTINGS import *
 inp = Signal()
 # inp.from_file('sampleSounds/galop02.wav')
 inp.from_file(INPUT_DIRECTORY + INPUT_FILENAME)
-inp.write_file('testOutputs/original.wav')
-print("\n  ---------- INPUT FILE ----------")
-inp.info()
+
 # inp.spectrogram()
 # inp.plotfft()
-print('\n--------- Grondtonen ------------')
-f_parameter = inp.freq_from_fft()
+#print('\n--------- Grondtonen ------------')
+#f_parameter = inp.freq_from_fft()
 
-print("\n  ---------- SAMPLING ----------")
-step = SAMPLE_LENGTH - SAMPLE_OVERLAP
-samples = inp.sampling(SAMPLE_LENGTH, SAMPLE_OVERLAP, False)
-print("\n    [DONE] Found " + str(len(samples)) + " samples: ")
+#print("\n  ---------- INPUT FILE ----------")
+inp.cut(0.58,1.58)
+#inp.info()
+inp.write_file('testOutputs/original.wav')
 
-print("\n  ---------- SYNTHESISE ----------")
+envelope, window = inp.make_envelope(500,500)
+freqs = inp.freq_from_fft(10, 2000)
 
-# Create envelope
-envelope = Signal()
-envelope.from_sound(ASD_envelope(
-    SAMPLE_LENGTH, .2, .8, .75, 2.4, 5, 1.5), NEW_FS)
-# envelope.info()
-# envelope.plot()
+signal = np.zeros(inp.get_len())
 
-new_sample_length = (1. * SAMPLE_LENGTH * NEW_FS) / inp.get_fs()
+for i in np.nditer(freqs):
+  signal += coswav(i,44100,inp.get_dur())
 
-synth_samples = []
-for i in range(0, len(samples)):
-    sample = samples[i]
-    # sample.info()
+signal *= envelope
 
-    # Find frequencies for creating the sound with there amplitudes
-    amplitudes = sample.get_ampl(f_parameter)
+plt.figure()
+plt.plot(inp.signal)
+plt.plot(envelope)
+#plt.plot(window)
+plt.show()
+plt.plot(inp.signal)
+plt.plot(envelope)
+plt.plot(signal)
+plt.show()
 
-    # Synthesise the sample
-    synth = Signal()
-    try:
-        synth.synth(f_parameter, amplitudes, sample.get_dur(), NEW_FS)
-    except Warning:
-        synth.from_sound(
-            np.zeros(int(round(sample.get_dur() * NEW_FS))), NEW_FS)
-
-    # Add ASD_envelope to synthesised samples
-    # synth.mul(envelope) # Not working correctly (i think -need to
-    # investigate-)
-
-    # Synthesised sample ready
-    synth_samples.append(synth)
-print("\n    [DONE] Synthesised " + str(len(synth_samples)) +
-      " of " + str(len(samples)) + " samples")
-
-###############################################################################
-#                        Put samples together to output                       #
-###############################################################################
-print("\n  ---------- ASSEMBLY ----------")
-out = Signal()
-
-# For now SAMPLE_LENGTH and SAMPLE_OVERLAP are the same
-# If sample_rate changes, so will length and overlap!
-new_sample_length = synth_samples[0].get_len()
-new_sample_overlap = (new_sample_length * SAMPLE_OVERLAP) / SAMPLE_LENGTH
-
-out.assemble(synth_samples, new_sample_length, new_sample_overlap)
-if(out.signal.dtype != np.int16):
-    out.to_int16()
-out.info()
-print("\n    [DONE] Merged " + str(len(synth_samples)) + " samples into one\n")
-out.write_file(OUTPUT_DIRECTORY + OUTPUT_FILENAME)
-out.freq_from_fft()
+wavwrite("test.wav",44100,signal)

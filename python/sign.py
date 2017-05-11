@@ -291,137 +291,61 @@ class Signal:
         # ARGUMENTS   : add2front: number of zeros to be added to the front of the signal
         #               add2end: number of zeros to be added to the end of the signal
         # RETURN      : None
-        if(add2front == 0 and add2end == 0):
+        if add2front == 0 and add2end == 0:
             raise Warning("No zeros to add.")
-        if(add2front < 0 or add2end < 0):
+        if add2front < 0 or add2end < 0:
             raise ValueError("Zeros to add can't be negative.")
 
-        if(add2front):
+        if add2front:
             self.signal = np.concatenate(
                 (np.zeros(add2front, dtype=self.signal.dtype), self.signal))
-        if(add2end):
+        if add2end:
             self.signal = np.concatenate(
                 (self.signal, np.zeros(add2end, dtype=self.signal.dtype)))
         self.__duration = len(self.signal) * (1. / self.__samplerate)
 
-    def freq_from_fft(self):
-        """Estimate frequency from peak of FFT
-        Pros: Accurate, usually even more so than zero crossing counter
-        (1000.000004 Hz for 1000 Hz, for instance).  Due to parabolic
-        interpolation being a very good fit for windowed log FFT peaks?
-        https://ccrma.stanford.edu/~jos/sasp/Quadratic_Interpolation_Spectral_Peaks.html
-        Accuracy also increases with signal length
-        Cons: Doesn't find the right value if harmonics are stronger than
-        fundamental, which is common.
-        """
+    def freq_from_fft(self, factor, treshold):
         N = len(self.signal)
 
         # Compute Fourier transform of windowed signal
         windowed = np.copy(self.signal) * kaiser(N, 100)
-        f = rfft(windowed)
-        i = argmax(abs(f))
-        # Find the peak and interpolate to get a more accurate peak
-        i_peak = argmax(abs(f))  # Just use this value for less-accurate result
-        #i_interp = parabolic(log(abs(f)), i_peak)[0]
+        f = np.abs(rfft(windowed))
+        #j = argrelmax(abs(f))[0]
+        #j = np.multiply(j,44100 * (1. / len(f)))
 
-        # Find the values for the first x harmonics.  Includes harmonic peaks only, by definition
-        # TODO: Should peak-find near each one, not just assume that fundamental was perfectly
-        # estimated. Instead of limited to 15, figure out how many fit based on f0 and sampling
-        # rate and report this "4 harmonics" and list the strength of each
+        k = int(44100 / factor)
 
-        freqs = np.zeros(6)
-        print('\n  -- Harmonischen ---')
-        i = 0
-        for x in range(2, 8):
-            freqs[i] = abs(f[i * x])
-            i += 1
+        #f[np.where(f < treshold)] = 0
 
-        print(freqs)
+        f[f < treshold] = 0
 
-        THD = sum([abs(f[i*x]) for x in range(2, 8)]) / abs(f[i])
-        print '\nTHD: %f%%' % (THD * 100),
-        print '\n ----- Grondtoon -----'
-        ground = np.array(self.__samplerate * i_peak / N)
-        print(ground)
-        # Convert to equivalent frequency
-        return np.hstack((ground,freqs))
+        freqs = np.zeros(len(windowed))
+
+        for i in range(k, len(f)-k):
+            freqs[i] = argmax(f[i-k:i+k+1])*44100 * (1. / len(f))
+
+        return freqs[np.where(freqs > 0)]
 
     def make_envelope(self, factor, treshold):
-        """Find the corresponding amplitudes
-        Returns the amplitudes that match the frequencies given to the function
+        """Creates an envelope over the signal
+        Returns the max over the signal and the used window
         """
         N = len(self.signal)
-        windowed = np.copy(self.signal) * kaiser(N, 100)
+        windowed = np.copy(self.signal) * kaiser(N, 5)
+        windowed = np.abs(windowed)
 
         ypoints = np.zeros(len(windowed))
-        xpoints = np.zeros(len(windowed))
+        #xpoints = np.zeros(len(windowed))
 
         k = int(44100/factor)
 
         for i in range(k, len(windowed)-k):
             ypoints[i] = windowed[i-k:i+k+1].max()
-            xpoints[i] = np.argmax(windowed[i-k:i+k+1])
+            #xpoints[i] = np.argmax(windowed[i-k:i+k+1])
 
         ypoints[np.where(ypoints < treshold)] = 0
 
         return ypoints, windowed
-
-    def freq_from_autocorr(self):
-        """Estimate frequency using autocorrelation
-        Pros: Best method for finding the true fundamental of any repeating wave,
-        even with strong harmonics or completely missing fundamental
-        Cons: Not as accurate, doesn't work for inharmonic things like musical
-        instruments, this implementation has trouble with finding the true peak
-        """
-        # Calculate autocorrelation (same thing as convolution, but with one input
-        # reversed in time), and throw away the negative lags
-        #self.signal -= mean(self.signal)  # Remove DC offset
-        corr = fftconvolve(np.copy(self.signal), np.copy(self.signal)[::-1], mode='full')
-        corr = corr[int(len(corr)/2):]
-
-        # Find the first low point
-        d = diff(corr)
-        start = find(d > 0)[0]
-
-        # Find the next peak after the low point (other than 0 lag).  This bit is
-        # not reliable for long signals, due to the desired peak occurring between
-        # samples, and other peaks appearing higher.
-        i_peak = argmax(corr[start:]) + start
-        #i_interp = parabolic(corr, i_peak)[0]
-        print ''
-        print '\n ------- Grondtoon -----'
-        print self.__samplerate / i_peak
-        return
-
-    def freq_from_hps(self):
-        """Estimate frequency using harmonic product spectrum
-        Low frequency noise piles up and overwhelms the desired peaks
-        """
-
-        N = len(self.signal)
-        #self.signal -= mean(self.signal)  # Remove DC offset
-
-        # Compute Fourier transform of windowed signal
-        windowed = np.copy(self.signal) * kaiser(N, 100)
-
-        # Get spectrum
-        X = log(abs(rfft(windowed)))
-
-        # Downsample sum logs of spectra instead of multiplying
-        hps = copy(X)
-        for h in arange(2, 15): # TODO: choose a smarter upper limit
-            dec = decimate(X, h, zero_phase=False)
-            hps[:len(dec)] += dec
-
-        # Find the peak and interpolate to get a more accurate peak
-        i_peak = argmax(hps[:len(dec)])
-        #i_interp = parabolic(hps, i_peak)[0]
-
-        # Convert to equivalent frequency
-        print ''
-        print '\n ------- Grondtoon -----'
-        print self.__samplerate * i_peak / N  # Hz
-        return
 
     def sampling(self, sample_length, sample_overlap, extend=True):
         # DESCRIPTION : Split the signal into multiple (smaller) signals => samples
