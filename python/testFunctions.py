@@ -27,21 +27,21 @@ inp.cut(0.58,1.58)
 #inp.info()
 inp.write_file('testOutputs/original.wav')
 
-envelope, window = inp.make_envelope(500,450)
-freqs, ampl = inp.freq_from_fft(envelope, 10, 50, 2)
+ENVELOPE, WINDOW = inp.make_envelope(500, 450)
+FREQS, AMPL = inp.freq_from_fft(ENVELOPE, 10, 50, 2)
 
 signal = np.zeros(inp.get_len())
 
-for i in range(0, len(freqs)):
-  signal += coswav(freqs[i],44100,inp.get_dur())*ampl[i]
+for i in range(0, len(FREQS)):
+    signal += coswav(FREQS[i], 44100, inp.get_dur())*AMPL[i]
 
-signal *= envelope
+signal *= ENVELOPE
 
 plt.figure()
-plt.plot(inp.signal*envelope)
+plt.plot(inp.signal*ENVELOPE)
 plt.show()
 plt.plot(inp.signal)
-plt.plot(envelope)
+plt.plot(ENVELOPE)
 plt.plot(signal)
 plt.show()
 

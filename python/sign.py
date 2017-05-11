@@ -314,8 +314,6 @@ class Signal:
         # Compute Fourier transform of enveloped signal
         f = np.abs(rfft(help))
 
-        
-
         k = int(44100 / factor)
 
         #f[np.where(f < treshold)] = 0
@@ -333,7 +331,7 @@ class Signal:
                     freqs[-1] * len(f) * (1. / 44100))] * \
                     (2. / len(help))))
 
-        return freqs, ampl
+        return freqs[::100], ampl[::100]
 
     def make_envelope(self, factor, treshold):
         """Creates an envelope over the signal
