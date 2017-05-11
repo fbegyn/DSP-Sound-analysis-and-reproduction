@@ -41,7 +41,7 @@ class Signal:
                 self.signal = stereo2mono(self.signal[:, 0], self.signal[:, 1])
             self.__duration = len(self.signal) * (1. / self.__samplerate)
 
-    def from_sound(self, sound, fs, start=0, end=None):
+    def from_sound(self, sound, fs=norm_samplerate, start=0, end=None):
         # DESCRIPTION : Generate a Signal instance from an array
         # ARGUMENTS   : sound: np.array with the sound
         #               fs: samplerate

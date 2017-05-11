@@ -88,18 +88,17 @@ def hammingWindow(numberOfSamples):
 
 
 # My example values: (3000,.05,.8,.4,2.4,5,1.5)
-def ASD_envelope(nSamples, tAttack, tRelease, susPlateau, kA, kS, kD):
+def ASR_envelope(nSamples, tAttack, tRelease, susPlateau, kA, kS, kD):
     if(tRelease > 1):
         raise ValueError("tRelease must be lower than 1.")
     if(tAttack > tRelease):
         raise ValueError("tAttack must be lower than tRelease.")
-        if(susPlateau > 1):
-            raise ValueError("Sustain niveau must be lower or equal to 1.")
+    if(susPlateau > 1):
+        raise ValueError("Sustain niveau must be lower or equal to 1.")
     if(kA <= 0 or kS <= 0 or kD <= 0):
-        raise ValueError(
-            u"co\u00EBffici\u00EBnts of exponential fuctions must be greater than zero.")
+        raise ValueError("co\u00EBffici\u00EBnts of exponential fuctions must be greater than zero.")
     # Number of samples for each stage
-    sA = int(nSamples * tAttack)        # Attack
+    sA = int(nSamples * tAttack)          # Attack
     sD = int(nSamples * (1. - tRelease))  # Decay
     sS = nSamples - sA - sD               # Sustain
 
@@ -125,6 +124,36 @@ def ASD_envelope(nSamples, tAttack, tRelease, susPlateau, kA, kS, kD):
 
     # Merge all stages together
     env = np.concatenate([A, S, D])
+    return env
+
+def ADSR_envelope(nSamples, tAttack, tDecay, tRelease, susPlateau):
+    if(tRelease > 1):
+        raise ValueError("tRelease must be lower than 1.")
+    if(tAttack > tRelease):
+        raise ValueError("tAttack must be lower than tRelease.")
+    if(susPlateau > 1):
+        raise ValueError("Sustain niveau must be lower or equal to 1.")
+    # Number of samples for each stages
+    sA = int(nSamples * tAttack)        # Attack
+    sD = int(nSamples * tDecay)         # Decay
+    sR = int(nSamples * (1. - tRelease)) # Release
+    sS = nSamples - sA - sD - sR        # Sustain
+
+    # Creation of the envelopes for each stage
+    A = np.linspace(0, 1, sA)
+
+    D = 1- np.linspace(0, 1, sD)
+    D *= (1 - susPlateau)
+    D += susPlateau
+
+    S = np.ones(sS)
+    S *= susPlateau
+
+    R = 1 - np.linspace(0, 1, sR)
+    R *= susPlateau
+
+    # Merge all stages together
+    env = np.concatenate([A,D,S,R])
     return env
 
 # End of File
