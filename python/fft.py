@@ -87,6 +87,10 @@ class FFT:
                 index = np.delete(index, index_i)
         return frequencies
 
+    def amplify_frequencies(self, frequencies, factor):
+        for i in np.nditer(frequencies):
+            self.fft[int(i * len(self.fft) * 1. / self.__samplerate)] *= factor
+
     def get_amplitudes(self, frequencies, resize_factor=1):
         if(len(frequencies) == 0):
             raise Warning("No frequencies given.")

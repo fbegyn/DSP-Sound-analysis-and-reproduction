@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 from __future__ import division
 #from common import parabolic
-#from common import parabolic as parabolic.
+#from common import parabolic as parabolic
 from time import time
 import itertools
 # Numpy
@@ -11,8 +11,9 @@ from numpy.fft import rfft
 # Matplotlib
 from matplotlib.mlab import find
 # Scipy
+from scipy import optimize
 from scipy.io import wavfile
-from scipy.signal import fftconvolve, kaiser, decimate
+from scipy.signal import fftconvolve, kaiser, decimate, argrelmax
 # Other files
 from functions import *
 from fft import *
@@ -30,7 +31,6 @@ class Signal:
     ###########################################################################
     #                          Signal input methodes                          #
     ###########################################################################
-    @classmethod
     def from_file(self, filename):
         # DESCRIPTION : Generate a Signal instance from a .wav file
         # ARGUMENTS   : filename: string to filename
@@ -41,7 +41,6 @@ class Signal:
                 self.signal = stereo2mono(self.signal[:, 0], self.signal[:, 1])
             self.__duration = len(self.signal) * (1. / self.__samplerate)
 
-    @classmethod
     def from_sound(self, sound, fs, start=0, end=None):
         # DESCRIPTION : Generate a Signal instance from an array
         # ARGUMENTS   : sound: np.array with the sound
@@ -55,19 +54,18 @@ class Signal:
         self.__samplerate = fs
         self.__duration = len(self.signal) * (1. / self.__samplerate)
 
-    @classmethod
     def from_Signal(self, other, start, duration):
         # DESCRIPTION : Generate a Signal instance from an other (longer) Signal instance
         # ARGUMENTS   : other: the other Signal instance
         #               start: start time (in seconds) of the signal
         #               duration: time (in seconds) that signal last
         # RETURN      : None
-        if(not self.instance_of(other)):
+        if not self.instance_of(other):
             raise TypeError(
                 "Cannot create Signal if argument is not of same class (Signal).")
-        if (start < 0):
+        if start < 0:
             raise ValueError("The start of the signal can't be negative.")
-        if ((start + duration) > self.__duration):
+        if (start + duration) > self.__duration:
             raise ValueError("The signal duration isn't that long.")
 
         self.signal = np.copy(other.signal[int(round(start * other.__samplerate))
@@ -327,8 +325,10 @@ class Signal:
         #i_interp = parabolic(log(abs(f)), i_peak)[0]
 
         # Find the values for the first x harmonics.  Includes harmonic peaks only, by definition
-        # TODO: Should peak-find near each one, not just assume that fundamental was perfectly estimated.
-        # Instead of limited to 15, figure out how many fit based on f0 and sampling rate and report this "4 harmonics" and list the strength of each
+        # TODO: Should peak-find near each one, not just assume that fundamental was perfectly
+        # estimated. Instead of limited to 15, figure out how many fit based on f0 and sampling
+        # rate and report this "4 harmonics" and list the strength of each
+
         freqs = np.zeros(6)
         print('\n  -- Harmonischen ---')
         i = 0
@@ -346,27 +346,25 @@ class Signal:
         # Convert to equivalent frequency
         return np.hstack((ground,freqs))
 
-    def get_ampl(self, freqs):
+    def make_envelope(self, factor, treshold):
         """Find the corresponding amplitudes
         Returns the amplitudes that match the frequencies given to the function
         """
-        signFFT = FFT(self)
+        N = len(self.signal)
+        windowed = np.copy(self.signal) * kaiser(N, 100)
 
-        try:
-            norm_factor = signFFT.normalize()
-        except ValueError:  # Catching already normalized
-                            # Catching dividing by 0 if no max found
-            norm_factor = 1
-        signFFT.clean_noise(.2)
+        ypoints = np.zeros(len(windowed))
+        xpoints = np.zeros(len(windowed))
 
-        try:
-            amplitudes = signFFT.get_amplitudes(freqs, norm_factor)
-        except Warning:
-            print("    Sample " + str(i) + " has no contents")
-            frequencies = []
-            amplitudes = []
+        k = int(44100/factor)
 
-        return amplitudes
+        for i in range(k, len(windowed)-k):
+            ypoints[i] = windowed[i-k:i+k+1].max()
+            xpoints[i] = np.argmax(windowed[i-k:i+k+1])
+
+        ypoints[np.where(ypoints < treshold)] = 0
+
+        return ypoints, windowed
 
     def freq_from_autocorr(self):
         """Estimate frequency using autocorrelation
