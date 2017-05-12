@@ -6,7 +6,7 @@ from time import time
 import itertools
 # Numpy
 import numpy as np
-from numpy import argmax, mean, diff, log, copy, arange
+from numpy import argmax, mean, diff, copy, arange
 from numpy.fft import rfft
 # Matplotlib
 from matplotlib.mlab import find
@@ -46,7 +46,7 @@ class Signal:
         # RETURN      : None
         if filename:
             self.__samplerate, self.signal = wavfile.read(filename)
-            if (self.signal.ndim == 2):  # check if stereo, convert to mono
+            if self.signal.ndim == 2:  # check if stereo, convert to mono
                 self.signal = stereo2mono(self.signal[:, 0], self.signal[:, 1])
             self.__duration = len(self.signal) * (1. / self.__samplerate)
 
@@ -57,7 +57,7 @@ class Signal:
         #               start: index of np.array sound
         #               end: index of np.array sound
         # RETURN      : None
-        if (end == None):
+        if end == None:
             end = len(sound)
         self.signal = np.copy(sound[start:end])
         self.__samplerate = fs
@@ -86,7 +86,7 @@ class Signal:
         # DESCRIPTION : Generate a copy of a Signal instance
         # ARGUMENTS   : other: the Signal instance that requires a copy
         # RETURN      : None
-        if(not self.instance_of(other)):
+        if not self.instance_of(other):
             raise TypeError(
                 "Cannot copy if argument is not of same class (Signal).")
 
@@ -110,11 +110,11 @@ class Signal:
         # ARGUMENTS   : start: beginning (in seconds) of required sample
         #               end: the end (in seconds) of required sample
         # RETURN      : sample: a Signal instance containing the sample
-        if (end > self.__duration):
+        if end > self.__duration:
             raise ValueError("The signal duration isn't that long.")
-        if (start < 0):
+        if start < 0:
             raise ValueError("The start of the signal can't be negative.")
-        if (start > end):
+        if start > end:
             raise ValueError("Please give in correct interval: start <= end.")
 
         sample = Signal()
@@ -201,7 +201,7 @@ class Signal:
         # DESCRIPTION : Changes dtype of signal to int16 and rounds correctly (not floor)
         # ARGUMENTS   : None
         # RETURN      : None
-        if(self.signal.dtype == np.int16):
+        if self.signal.dtype == np.int16:
             raise Warning("signal dtype already int.")
 
         self.signal = np.rint(self.signal)  # Correct afronden
@@ -211,12 +211,12 @@ class Signal:
         # DESCRIPTION : Sommate two signals together
         # ARGUMENTS   : other: the Signal instance that will be sommated
         # RETURN      : None
-        if(not self.instance_of(other)):
+        if not self.instance_of(other):
             raise TypeError(
                 "Cannot add if argument is not of same class (Signal).")
-        if(self.__samplerate != other.__samplerate):
+        if self.__samplerate != other.__samplerate:
             raise ValueError("Both signals must have same samplerate.")
-        if(len(self.signal) != len(other.signal)):
+        if len(self.signal) != len(other.signal):
             raise ValueError("Both signals must have same number of samples.")
 
         self.signal = np.add(self.signal,np.copy(other.signal))
@@ -225,12 +225,12 @@ class Signal:
         # DESCRIPTION : Multiply two signals together
         # ARGUMENTS   : other: the Signal instance that self will be multiplied with
         # RETURN      : None
-        if(not self.instance_of(other)):
+        if not self.instance_of(other):
             raise TypeError(
                 "Cannot multiply if argument is not of same class (Signal).")
-        if(self.__samplerate != other.__samplerate):
+        if self.__samplerate != other.__samplerate:
             raise ValueError("Both signals must have same samplerate.")
-        if(len(self.signal) != len(other.signal)):
+        if len(self.signal) != len(other.signal):
             raise ValueError("Both signals must have same number of samples.")
 
         self.signal = np.multiply(self.signal,np.copy(other.signal))
@@ -239,7 +239,7 @@ class Signal:
         # DESCRIPTION : Changes amplitude of the signal
         # ARGUMENTS   : factor: desired amplify factor
         # RETURN      : None
-        if (factor == 0):
+        if factor == 0:
             raise Warning("Amplifies factor is zero.")
 
         self.signal *= factor
@@ -249,9 +249,9 @@ class Signal:
         # ARGUMENTS   : start: begin (in seconds) of the interval
         #               end: end (in seconds) of the interval
         # RETURN      : None
-        if (start >= end):
+        if start >= end:
             raise ValueError("Please give in correct interval: start < end.")
-        if (end > self.__duration):
+        if end > self.__duration:
             raise ValueError("The signal duration isn't that long.")
 
         self.signal = self.signal[int(
@@ -263,7 +263,7 @@ class Signal:
         # ARGUMENTS   : seconds: place (in seconds) where signal will be cut
         # RETURN      : chopped: Signal instance with the last part of the signal
         #                        first part of the signal is stored in self
-        if (seconds >= self.__duration):
+        if seconds >= self.__duration:
             raise ValueError("The signal duration isn't that long.")
 
         chopped = self.copy()
@@ -275,10 +275,10 @@ class Signal:
         # DESCRIPTION : Concatenate two signals together
         # ARGUMENTS   : other: the Signal instance that will be added at the end
         # RETURN      : None
-        if(not self.instance_of(other)):
+        if not self.instance_of(other):
             raise TypeError(
                 "Cannot concatenate if argument is not of same class (Signal).")
-        if(self.__samplerate != other.__samplerate):
+        if self.__samplerate != other.__samplerate:
             raise ValueError("Both signals must have same samplerate.")
         self.signal = np.concatenate((self.signal, np.copy(other.signal)))
         self.__duration += other.__duration
@@ -310,10 +310,9 @@ class Signal:
         self.__duration = len(self.signal) * (1. / self.__samplerate)
 
     def freq_from_fft(self, envelope, factor, f_treshold, a_treshold):
-        help = np.copy(self.signal) * blackmanharris(len(self.signal))
-
+        window = np.copy(self.signal) * blackmanharris(len(self.signal))
         # Compute Fourier transform of enveloped signal
-        f = np.abs(fft(help))
+        f = np.abs(fft(window))
 
         k = int(44100 / factor)
 
@@ -329,13 +328,13 @@ class Signal:
             if frequency > 0:
                 parameters[frequency] = np.square(f[int( \
                     frequency * len(f) * (1. / 44100))] * \
-                    (2. / len(help)))
+                    (2. / len(window)))
 
         parameters_sorted = sorted(parameters.items(), key=operator.itemgetter(1))
 
-        for j in range(0, 3):
+        for j in range(0, 5):
             fundamentals.append(parameters_sorted.pop())
-            for i in range(2, 5):
+            for i in range(2, 6):
                 if fundamentals[j][0]*i in parameters:
                     fundamentals.append((fundamentals[j][0]*i, \
                         parameters.pop(fundamentals[j][0]*i)))
@@ -369,14 +368,14 @@ class Signal:
         #               extend: if True, will add an extra sample at the start and end
         # RETURN      : samples: A np.array of Signal instances with all the
         # samples
-        if(sample_length <= 0):
+        if sample_length <= 0:
             raise ValueError("Sample length must be greater than 0.")
-        if(sample_length > self.get_len()):
+        if sample_length > self.get_len():
             raise ValueError(
                 "Sample length can't be greater than signal length.")
-        if(sample_overlap < 0):
+        if sample_overlap < 0:
             raise ValueError("Sample overlap can not be negative.")
-        if(sample_overlap >= sample_length):
+        if sample_overlap >= sample_length:
             raise ValueError(
                 "Sample overlap must be lower than sample_length.")
 
@@ -391,13 +390,13 @@ class Signal:
 
         # Add zeros to self_copy to correct to have all full sample_lengths
         short_sample = (self_copy.get_len() - sample_length) % step
-        if(short_sample != 0):  # Will be 0 if we don't need to add extra
+        if short_sample != 0:  # Will be 0 if we don't need to add extra
             zeros2add = step - short_sample
             self_copy.extend(0, zeros2add)
             print("\n    Added " + str(zeros2add) +
                   " zeros, new length : " + str(self_copy.get_len()))
 
-        if(extend):
+        if extend:
             # Add zeros so we have an extra sample at the start and end
             self_copy.extend(step, step)
             print("\n    Extended with 2 samples (2*" + str(step) +
@@ -428,11 +427,11 @@ class Signal:
         #               sample_overlap: how much each sample overlap with his neighbours
         # RETURN      : samples: A np.array of Signal instances with all the
         # samples
-        if(sample_length <= 0):
+        if sample_length <= 0:
             raise ValueError("Sample length must be greater than 0.")
-        if(sample_overlap < 0):
+        if sample_overlap < 0:
             raise ValueError("Sample overlap can not be negative.")
-        if(sample_overlap >= sample_length):
+        if sample_overlap >= sample_length:
             raise ValueError(
                 "Sample overlap must be lower than sample_length.")
 
@@ -441,7 +440,7 @@ class Signal:
         signal_length = (len(samples) - 1) * step + sample_length
 
         # Initiate assembled Signal
-        if(not self.instance_of(samples[0])):
+        if not self.instance_of(samples[0]):
             raise TypeError("Sample " + str(i) +
                             " is not of same class (Signal).")
         self.signal = np.zeros(signal_length, dtype=samples[0].signal.dtype)
@@ -450,10 +449,10 @@ class Signal:
 
         # Add each sample to Signal
         for i in range(0, len(samples)):
-            if(not self.instance_of(samples[i])):
+            if not self.instance_of(samples[i]):
                 raise TypeError("Sample " + str(i) +
                                 " is not of same class (Signal).")
-            if(samples[i].get_len() != sample_length):
+            if samples[i].get_len() != sample_length:
                 raise ValueError("Sample " + str(i) + " has wrong length.")
             # For each synthesised sample: add extra zeros to begin and end
             # To recreate full length of signal (sum of all samples, with
@@ -468,12 +467,12 @@ class Signal:
         #               duration: the length (in seconds) of the desired signal
         #               fs: desired sample rate
         # RETURN      : None
-        if (len(frequencies) == 0):
+        if len(frequencies) == 0:
             raise Warning("Nothing to synthesise.")
-        if (len(frequencies) != len(amplitudes)):
+        if len(frequencies) != len(amplitudes):
             raise ValueError(
                 "Frequencies and amplitues have different length.")
-        if (duration <= 0):
+        if duration <= 0:
             raise ValueError("Duration must be greater than zero.")
 
         self.signal = np.zeros(int(round(duration * fs)))

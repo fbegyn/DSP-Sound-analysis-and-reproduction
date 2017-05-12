@@ -3,11 +3,12 @@ from functions import *
 from sign import *
 from fft import *
 import numpy as np
+import scipy.signal as sign
 
 # File with synthesise settings
 from SETTINGS import *
 
-""" Synthesising a signal (by Francis Begyn and Laurens Scheldeman) """
+#""" Synthesising a signal (by Francis Begyn and Laurens Scheldeman) """
 
 ###############################################################################
 #                            Input of sample sound                            #
@@ -32,23 +33,33 @@ FUND = inp.freq_from_fft(ENVELOPE, 10, 18, 1)
 
 signal = np.zeros(inp.get_len())
 
+f, Pwelch_spec = sign.welch(inp.signal, 44100, scaling='spectrum')
+
+plt.semilogy(f, Pwelch_spec)
+plt.xlabel('frequency [Hz]')
+plt.ylabel('PSD')
+plt.grid()
 
 
 for i in range(0, len(FUND)):
-    FUND[i][0] *= 2
     signal += coswav(FUND[i][0], 44100, inp.get_dur())*FUND[i][1]
     signal *= ENVELOPE
 
 signal *= 5
+
+f, Pwelch_spec = sign.welch(signal, 44100, scaling='spectrum')
+plt.semilogy(f, Pwelch_spec)
+plt.xlabel('frequency [Hz]')
+plt.ylabel('PSD')
+plt.grid()
+plt.show()
+
 plt.figure()
 plt.plot(ENVELOPE)
 plt.show()
 plt.plot(inp.signal*ENVELOPE)
 plt.plot(signal)
 plt.show()
-plt.specgram(inp.signal, NFFT=1024, Fs=44100, noverlap=512)
-plt.show()
-plt.specgram(signal, NFFT=1024, Fs=44100, noverlap=512)
-plt.show()
+
 
 wavwrite("testOutputs/synth.wav", 44100, signal)
