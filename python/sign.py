@@ -311,21 +311,20 @@ class Signal:
 
     def freq_from_fft(self, envelope, factor, f_treshold, a_treshold):
         window = np.copy(self.signal) * blackmanharris(len(self.signal))
+
         # Compute Fourier transform of enveloped signal
         f = np.abs(fft(window))
-
-        k = int(44100 / factor)
-
-        #f[np.where(f < treshold)] = 0
 
         f[f < f_treshold] = 0
 
         parameters = dict()
         fundamentals = []
 
-        for i in range(k, len(f)-k):
-            frequency = argmax(f[i-k:i+k+1])*44100 * (1. / len(f))
-            if frequency > 0:
+        offset = int(44100 / factor)
+        for i in range(offset, len(f)-offset):
+            # find frequency with max amplitude
+            frequency = argmax(f[i-offset:i+offset+1])*44100 * (1. / len(f))
+            if frequency > 0: # only positive frequencies, negatives are the same
                 parameters[frequency] = np.square(f[int( \
                     frequency * len(f) * (1. / 44100))] * \
                     (2. / len(window)))
@@ -351,10 +350,9 @@ class Signal:
         ypoints = np.zeros(len(windowed))
         #xpoints = np.zeros(len(windowed))
 
-        k = int(44100/factor)
-
-        for i in range(k, len(windowed)-k):
-            ypoints[i] = windowed[i-k:i+k+1].max()
+        offset = int(44100*factor)
+        for i in range(offset, len(windowed)-offset):
+            ypoints[i] = windowed[i-offset:i+offset+1].max()
             #xpoints[i] = np.argmax(windowed[i-k:i+k+1])
 
         ypoints[np.where(ypoints < treshold)] = 0

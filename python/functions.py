@@ -1,7 +1,9 @@
 #!/usr/bin/python2
 import numpy as np
 from numpy import pi, cos, exp
+
 from matplotlib import pyplot as plt
+
 from scipy.io import wavfile
 from scipy.fftpack import fft, ifft, fftshift, fftfreq
 
