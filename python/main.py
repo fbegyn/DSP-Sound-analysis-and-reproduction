@@ -22,6 +22,14 @@ inp = Signal()
 # inp.from_file('sampleSounds/galop02.wav')
 inp.from_file(INPUT_DIRECTORY + INPUT_FILENAME)
 
+# Pick a sample out of the input sound (like 1 step of the gallop)
+if CUT_INPUT:
+    print("\n    Pick a sound out of the input file")
+    # twice the sound, could be bigger, but faster to test
+    inp.cut(CUT_INPUT_BEGIN, CUT_INPUT_END)
+    inp.info()
+    inp.write_file(OUTPUT_DIRECTORY + 'input.wav')
+print("\n    [DONE] Input file ready to be synthesised")
 # Look at spectrogram to define cut length
 # inp.spectrogram()
 # inp.plotfft()
@@ -40,7 +48,7 @@ print("\n  ---------- FINDING PARAMETERS ----------")
 ENVELOPE, WINDOW = inp.make_envelope(WINDOW_OFFSET, NOISE_THRESHOLD)
 
 # Finding fundamental frequencies out of Fourier Transform (using FFT)
-FUND = inp.freq_from_fft(ENVELOPE, FFT_OFFSET, FREQUENCY_THRESHOLD, AMPLITUDE_THRESHOLD)
+FUND = inp.freq_from_fft(ENVELOPE, FFT_OFFSET, FREQUENCY_THRESHOLD, FREQUENCY_AMOUNT, AMPLITUDE_THRESHOLD, AMPLITUDE_AMOUNT)
 print('\n        Frequency\t|  Amplitude')
 print('     -------------------+----------------')
 for i in range(0, len(FUND)):
@@ -77,7 +85,11 @@ print(str(len(NEW_ENVELOPE)))
 
 for i in range(0, len(FUND)):
     signal += coswav(FUND[i][0], NEW_FS, inp.get_dur())*FUND[i][1]
+<<<<<<< HEAD
     signal *= NEW_ENVELOPE
+=======
+    signal *= ENVELOPE
+>>>>>>> origin/master
 signal *= 5 # DAFUQ ???
 outp = Signal()
 outp.from_sound(signal,NEW_FS)
@@ -90,7 +102,7 @@ plt.ylabel('PSD')
 plt.grid()
 plt.show()
 
-plt.figure()
+fig = plt.figure()
 plt.plot(ENVELOPE)
 plt.show()
 plt.plot(inp.signal*ENVELOPE)
