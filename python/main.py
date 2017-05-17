@@ -25,7 +25,7 @@ inp.info()
 # inp.plotfft()
 
 # Pick a sample out of the input sound (like 1 step of the gallop)
-if (CUT_INPUT):
+if CUT_INPUT:
     print("\n    Pick a sound out of the input file")
     # twice the sound, could be bigger, but faster to test
     inp.cut(CUT_INPUT_BEGIN, CUT_INPUT_END)
@@ -114,7 +114,7 @@ new_sample_length = synth_samples[0].get_len()
 new_sample_overlap = (new_sample_length * SAMPLE_OVERLAP) / SAMPLE_LENGTH
 
 out.assemble(synth_samples, new_sample_length, new_sample_overlap)
-if(out.signal.dtype != np.int16):
+if out.signal.dtype != np.int16:
     out.to_int16()
 out.info()
 print("\n    [DONE] Merged " + str(len(synth_samples)) + " samples into one\n")
