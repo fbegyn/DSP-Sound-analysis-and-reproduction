@@ -53,28 +53,37 @@ print("\n  ---------- SYNTHESISE ----------")
 # The parameters to synthesise our signal are:
 #    * The fundamental frequencies: FUND
 #    * The envelope of the original signal: ENVELOPE
-signal = np.zeros(int(round((inp.get_len()*44100)*(1./inp.get_fs()))))
-
+signal = np.zeros(int(round((inp.get_len()*NEW_FS)*(1./inp.get_fs()))))
+print(str(len(signal)))
 # Estimate power spectral density using Welchs method:
 # Compute an estimate of the power spectral density by dividing the data into
 # overlapping segments, computing a modified periodogram for each segment and
 # averaging the periodograms.
 f, Pwelch_spec = sign.welch(inp.signal, inp.get_fs(), scaling='spectrum')
 
-plt.semilogy(f, Pwelch_spec)
-plt.xlabel('frequency [Hz]')
-plt.ylabel('PSD')
-plt.grid()
+#plt.semilogy(f, Pwelch_spec)
+#plt.xlabel('frequency [Hz]')
+#plt.ylabel('PSD')
+#plt.grid()
+
+# Change the length of envelope to match the new samplerate
+NEW_ENVELOPE = sign.resample(ENVELOPE, int(round(inp.get_dur()*NEW_FS)), window=None)
+print(str(len(NEW_ENVELOPE)))
+#plt.figure()
+#plt.plot(ENVELOPE)
+#plt.figure()
+#plt.plot(ENVELOPE2)
+#plt.show()
 
 for i in range(0, len(FUND)):
-    signal += coswav(FUND[i][0], 44100, inp.get_dur())*FUND[i][1]
-    signal *= ENVELOPE
+    signal += coswav(FUND[i][0], NEW_FS, inp.get_dur())*FUND[i][1]
+    signal *= NEW_ENVELOPE
 signal *= 5 # DAFUQ ???
 outp = Signal()
-outp.from_sound(signal,44100)
+outp.from_sound(signal,NEW_FS)
 outp.amplify(5)
 
-f, Pwelch_spec = sign.welch(signal, 44100, scaling='spectrum')
+f, Pwelch_spec = sign.welch(signal, NEW_FS, scaling='spectrum')
 plt.semilogy(f, Pwelch_spec)
 plt.xlabel('frequency [Hz]')
 plt.ylabel('PSD')
