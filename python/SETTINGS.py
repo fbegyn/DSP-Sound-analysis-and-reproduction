@@ -10,15 +10,19 @@ INPUT_FILENAME = 'galop02.wav'
 
 # Pick a sample out of the input sound
 # Change CUT_INPUT to False to disable
-CUT_INPUT = False
-CUT_INPUT_BEGIN = 0.58
+CUT_INPUT = True
+CUT_INPUT_BEGIN = 0
 CUT_INPUT_END = 1.58
 
 ###############################################################################
-#                                   Sampling                                  #
+#                               Find parameters                               #
 ###############################################################################
-SAMPLE_LENGTH = 352  # 8ms
-SAMPLE_OVERLAP = 10
+WINDOW_OFFSET = 1./1000 # in seconds
+NOISE_THRESHOLD = 200
+
+FFT_OFFSET = 10
+FREQUENCY_THRESHOLD = 18
+AMPLITUDE_THRESHOLD = 1
 
 ###############################################################################
 #                                  Synthesise                                 #
@@ -27,13 +31,5 @@ SAMPLE_OVERLAP = 10
 # In the end we'll need 48000 sps
 NEW_FS = 48000
 
-# Maximum number of frequencies used to recreate sound
-# set to zero to disable limit
-MAX_FREQUENCIES = 0
-
-###############################################################################
-#                        Put samples together to output                       #
-###############################################################################
 # File location
 OUTPUT_DIRECTORY = 'testOutputs/'
-OUTPUT_FILENAME = 'synthesised.wav'

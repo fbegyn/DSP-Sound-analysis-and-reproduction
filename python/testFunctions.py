@@ -1,14 +1,17 @@
+
+
 #!/usr/bin/python2
+# File with synthesise settings
+from SETTINGS import *
+# Files with methodes
 from functions import *
 from sign import *
 from fft import *
+
+# Libraries
 import numpy as np
-import scipy.signal as sign
 
-# File with synthesise settings
-from SETTINGS import *
-
-#""" Synthesising a signal (by Francis Begyn and Laurens Scheldeman) """
+""" Synthesising a signal (by Francis Begyn and Laurens Scheldeman) """
 
 ###############################################################################
 #                            Input of sample sound                            #
@@ -17,49 +20,108 @@ from SETTINGS import *
 inp = Signal()
 # inp.from_file('sampleSounds/galop02.wav')
 inp.from_file(INPUT_DIRECTORY + INPUT_FILENAME)
-
+inp.write_file('testOutputs/original.wav')
+print("\n  ---------- INPUT FILE ----------")
+inp.info()
 # inp.spectrogram()
 # inp.plotfft()
-#print('\n--------- Grondtonen ------------')
-#f_parameter = inp.freq_from_fft()
 
-#print("\n  ---------- INPUT FILE ----------")
-inp.cut(0, 1.58)
-#inp.info()
-inp.write_file('testOutputs/original.wav')
+# Pick a sample out of the input sound (like 1 step of the gallop)
+if (CUT_INPUT):
+    print("\n    Pick a sound out of the input file")
+    # twice the sound, could be bigger, but faster to test
+    inp.cut(CUT_INPUT_BEGIN, CUT_INPUT_END)
+    inp.info()
+    inp.write_file(OUTPUT_DIRECTORY + 'input.wav')
+print("\n    [DONE] Input file ready to be synthesised")
+# inp.spectrogram()
+# inp.plotfft()
 
-ENVELOPE, WINDOW = inp.make_envelope(1000, 200)
-FUND = inp.freq_from_fft(ENVELOPE, 10, 18, 1)
-
-signal = np.zeros(inp.get_len())
-
-f, Pwelch_spec = sign.welch(inp.signal, 44100, scaling='spectrum')
-
-plt.semilogy(f, Pwelch_spec)
-plt.xlabel('frequency [Hz]')
-plt.ylabel('PSD')
-plt.grid()
+print('\n--------- Grondtonen ------------')
+f_parameter = inp.freq_from_fft()
+#inp.freq_from_hps()
 
 
-for i in range(0, len(FUND)):
-    signal += coswav(FUND[i][0], 44100, inp.get_dur())*FUND[i][1]
-    signal *= ENVELOPE
+###############################################################################
+#                                   Sampling                                  #
+###############################################################################
+print("\n  ---------- SAMPLING ----------")
+step = SAMPLE_LENGTH - SAMPLE_OVERLAP
+samples = inp.sampling(SAMPLE_LENGTH, SAMPLE_OVERLAP, False)
+print("\n    [DONE] Found " + str(len(samples)) + " samples: ")
 
-signal *= 5
+###############################################################################
+#                                  Synthesise                                 #
+###############################################################################
+print("\n  ---------- SYNTHESISE ----------")
 
-f, Pwelch_spec = sign.welch(signal, 44100, scaling='spectrum')
-plt.semilogy(f, Pwelch_spec)
-plt.xlabel('frequency [Hz]')
-plt.ylabel('PSD')
-plt.grid()
-plt.show()
+# Create envelope
+envelope = Signal()
+envelope.from_sound(ASD_envelope(
+    SAMPLE_LENGTH, .2, .8, .75, 2.4, 5, 1.5), NEW_FS)
+# envelope.info()
+# envelope.plot()
 
-plt.figure()
-plt.plot(ENVELOPE)
-plt.show()
-plt.plot(inp.signal*ENVELOPE)
-plt.plot(signal)
-plt.show()
+new_sample_length = (1. * SAMPLE_LENGTH * NEW_FS) / inp.get_fs()
 
+synth_samples = []
+for i in range(0, len(samples)):
+    sample = samples[i]
+    # sample.info()
 
-wavwrite("testOutputs/synth.wav", 44100, signal)
+    # Find frequencies for creating the sound with there amplitudes
+    sampleF = FFT(sample, 10000)
+
+    try:
+        norm_factor = sampleF.normalize()
+    except ValueError:  # Catching already normalized
+                       # Catching dividing by 0 if no max found
+        norm_factor = 1
+    sampleF.clean_noise(.2)
+    # sampleF.plot()
+    try:
+        frequencies = sampleF.find_freq(MAX_FREQUENCIES)
+        amplitudes = sampleF.get_amplitudes(frequencies, norm_factor)
+    except Warning:  # If no frequencies are found
+        print("    Sample " + str(i) + " has no contents")
+        frequencies = []
+        amplitudes = []
+
+    # Synthesise the sample
+    synth = Signal()
+    try:
+        synth.synth(frequencies, amplitudes, sample.get_dur(), NEW_FS)
+    except Warning:
+        synth.from_sound(
+            np.zeros(int(round(sample.get_dur() * NEW_FS))), NEW_FS)
+
+    # Add ASD_envelope to synthesised samples
+    # synth.mul(envelope) # Not working correctly (i think -need to
+    # investigate-)
+
+    # Synthesised sample ready
+    synth_samples.append(synth)
+print("\n    [DONE] Synthesised " + str(len(synth_samples)) +
+      " of " + str(len(samples)) + " samples")
+
+###############################################################################
+#                        Put samples together to output                       #
+###############################################################################
+print("\n  ---------- ASSEMBLY ----------")
+out = Signal()
+
+# For now SAMPLE_LENGTH and SAMPLE_OVERLAP are the same
+# If sample_rate changes, so will length and overlap!
+new_sample_length = synth_samples[0].get_len()
+new_sample_overlap = (new_sample_length * SAMPLE_OVERLAP) / SAMPLE_LENGTH
+
+out.assemble(synth_samples, new_sample_length, new_sample_overlap)
+if(out.signal.dtype != np.int16):
+    out.to_int16()
+out.info()
+print("\n    [DONE] Merged " + str(len(synth_samples)) + " samples into one\n")
+out.write_file(OUTPUT_DIRECTORY + OUTPUT_FILENAME)
+out.freq_from_fft()
+# out.spectrogram()
+print('\n -------- testje -------')
+### End Of File ###
