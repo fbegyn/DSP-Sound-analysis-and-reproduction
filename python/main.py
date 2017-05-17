@@ -85,12 +85,7 @@ print(str(len(NEW_ENVELOPE)))
 
 for i in range(0, len(FUND)):
     signal += coswav(FUND[i][0], NEW_FS, inp.get_dur())*FUND[i][1]
-<<<<<<< HEAD
     signal *= NEW_ENVELOPE
-=======
-    signal *= ENVELOPE
->>>>>>> origin/master
-signal *= 5 # DAFUQ ???
 outp = Signal()
 outp.from_sound(signal,NEW_FS)
 outp.amplify(5)
@@ -101,6 +96,12 @@ plt.xlabel('frequency [Hz]')
 plt.ylabel('PSD')
 plt.grid()
 plt.show()
+
+pltFig = plt.figure()
+pltEnv = pltFig.add_subplot(111)
+pltEnv.plot(ENVELOPE)
+
+
 
 fig = plt.figure()
 plt.plot(ENVELOPE)
