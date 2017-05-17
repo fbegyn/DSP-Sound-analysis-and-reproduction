@@ -9,6 +9,7 @@ import numpy as np
 from numpy import argmax, mean, diff, copy, arange
 from numpy.fft import rfft
 # Matplotlib
+from matplotlib import pyplot as plt
 from matplotlib.mlab import find
 # Scipy
 from scipy import optimize

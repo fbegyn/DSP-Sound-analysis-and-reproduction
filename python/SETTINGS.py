@@ -22,9 +22,9 @@ NOISE_THRESHOLD = 200
 
 FFT_OFFSET = 10
 FREQUENCY_THRESHOLD = 18
-FREQUENCY_AMOUNT = 5
+FREQUENCY_AMOUNT = 8
 AMPLITUDE_THRESHOLD = 1
-AMPLITUDE_AMOUNT = 100
+AMPLITUDE_AMOUNT = 5
 
 ###############################################################################
 #                                  Synthesise                                 #
