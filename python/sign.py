@@ -309,7 +309,7 @@ class Signal:
                 (self.signal, np.zeros(add2end, dtype=self.signal.dtype)))
         self.__duration = len(self.signal) * (1. / self.__samplerate)
 
-    def freq_from_fft(self, envelope, factor, f_treshold, a_treshold):
+    def freq_from_fft(self, envelope, factor, f_treshold, f_amount, a_treshold, a_amount):
         window = np.copy(self.signal) * blackmanharris(len(self.signal))
 
         # Compute Fourier transform of enveloped signal
@@ -331,9 +331,9 @@ class Signal:
 
         parameters_sorted = sorted(parameters.items(), key=operator.itemgetter(1))
 
-        for j in range(0, 5):
+        for j in range(0, a_amount):
             fundamentals.append(parameters_sorted.pop())
-            for i in range(2, 6):
+            for i in range(2, f_amount):
                 if fundamentals[j][0]*i in parameters:
                     fundamentals.append((fundamentals[j][0]*i, \
                         parameters.pop(fundamentals[j][0]*i)))

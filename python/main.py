@@ -48,7 +48,7 @@ print("\n  ---------- FINDING PARAMETERS ----------")
 ENVELOPE, WINDOW = inp.make_envelope(WINDOW_OFFSET, NOISE_THRESHOLD)
 
 # Finding fundamental frequencies out of Fourier Transform (using FFT)
-FUND = inp.freq_from_fft(ENVELOPE, FFT_OFFSET, FREQUENCY_THRESHOLD, AMPLITUDE_THRESHOLD)
+FUND = inp.freq_from_fft(ENVELOPE, FFT_OFFSET, FREQUENCY_THRESHOLD, FREQUENCY_AMOUNT, AMPLITUDE_THRESHOLD, AMPLITUDE_AMOUNT)
 print('\n        Frequency\t|  Amplitude')
 print('     -------------------+----------------')
 for i in range(0, len(FUND)):
@@ -75,21 +75,21 @@ plt.ylabel('PSD')
 plt.grid()
 
 for i in range(0, len(FUND)):
-    signal += coswav(FUND[i][0], 44100, inp.get_dur())*FUND[i][1]
+    signal += coswav(FUND[i][0], NEW_FS, inp.get_dur())*FUND[i][1]
     signal *= ENVELOPE
 signal *= 5 # DAFUQ ???
 outp = Signal()
 outp.from_sound(signal,44100)
 outp.amplify(5)
 
-f, Pwelch_spec = sign.welch(signal, 44100, scaling='spectrum')
+f, Pwelch_spec = sign.welch(signal, NEW_FS, scaling='spectrum')
 plt.semilogy(f, Pwelch_spec)
 plt.xlabel('frequency [Hz]')
 plt.ylabel('PSD')
 plt.grid()
 plt.show()
 
-plt.figure()
+fig = plt.figure()
 plt.plot(ENVELOPE)
 plt.show()
 plt.plot(inp.signal*ENVELOPE)
