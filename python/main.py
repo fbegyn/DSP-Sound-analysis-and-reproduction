@@ -89,7 +89,7 @@ for i in range(0, len(FUND)):
     signal *= NEW_ENVELOPE
 outp = Signal()
 outp.from_sound(signal,NEW_FS)
-outp.amplify(5)
+#outp.amplify(100000)
 
 f, Pwelch_spec = sign.welch(signal, NEW_FS, scaling='spectrum')
 plt.semilogy(f, Pwelch_spec)

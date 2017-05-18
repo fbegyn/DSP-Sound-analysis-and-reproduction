@@ -242,7 +242,6 @@ class Signal:
         # RETURN      : None
         if factor == 0:
             raise Warning("Amplifies factor is zero.")
-
         self.signal *= factor
 
     def cut(self, start, end):
@@ -338,6 +337,8 @@ class Signal:
                 if fundamentals[j][0]*i in parameters:
                     fundamentals.append((fundamentals[j][0]*i, \
                         parameters.pop(fundamentals[j][0]*i)))
+            for i in range(0, 4):
+                parameters_sorted.pop()
         return fundamentals
 
     def make_envelope(self, factor, treshold):
