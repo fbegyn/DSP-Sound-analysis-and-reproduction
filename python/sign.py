@@ -310,6 +310,9 @@ class Signal:
         self.__duration = len(self.signal) * (1. / self.__samplerate)
 
     def freq_from_fft(self, envelope, factor, f_treshold, f_amount, a_treshold, a_amount):
+        """ Searches and returns a list with the a_amount to frequencies with f_amount
+        harmonics. Tresholds set limits for frequency and amplitude
+        """
         window = np.copy(self.signal) * blackmanharris(len(self.signal))
 
         # Compute Fourier transform of enveloped signal
@@ -328,9 +331,12 @@ class Signal:
                 parameters[frequency] = np.square(f[int( \
                     frequency * len(f) * (1. / 44100))] * \
                     (2. / len(window)))
-
+        # Strongest frequency is at the back of the list
         parameters_sorted = sorted(parameters.items(), key=operator.itemgetter(1))
 
+        # Pop the strongest frequency with an interval of 5 to keep minimum spacing
+        # between the frequencies. This prevents strong peaks from dominating the
+        # sound.
         for j in range(0, a_amount):
             fundamentals.append(parameters_sorted.pop())
             for i in range(2, f_amount):

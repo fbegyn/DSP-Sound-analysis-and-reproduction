@@ -6,12 +6,12 @@
 ###############################################################################
 # File location
 INPUT_DIRECTORY = 'sampleSounds/'
-INPUT_FILENAME = 'galop02.wav'
+INPUT_FILENAME = 'krekel02.wav'
 
 # Pick a sample out of the input sound
 # Change CUT_INPUT to False to disable
 CUT_INPUT = True
-CUT_INPUT_BEGIN = 0
+CUT_INPUT_BEGIN = 0.58
 CUT_INPUT_END = 1.58
 
 ###############################################################################
@@ -22,7 +22,7 @@ NOISE_THRESHOLD = 200
 
 FFT_OFFSET = 10
 FREQUENCY_THRESHOLD = 18
-FREQUENCY_AMOUNT = 8
+FREQUENCY_AMOUNT = 10
 AMPLITUDE_THRESHOLD = 1
 AMPLITUDE_AMOUNT = 5
 
