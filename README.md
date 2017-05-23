@@ -25,6 +25,12 @@ School project aiming towards sound decoding and reproduction in python.
 * 10 mei: begeleiding
 * 24 mei: code ingeven met commentaar (dient als verslag) 
 
+## Code progress
+Momenteel blijkt alles te werken op vlak van frequencies. Deze worden correct geëxporteerd
+en de vermenigvuldiging werkt ook degelijk.
+Nu moet nog gezocht worden naar een ADSR soort gelijk techniek om de envelope parameters
+te verkleinen.
+
 ## Research
 * https://www.microsoft.com/en-us/research/wp-content/uploads/2016/07/ParametricWaveField.pdf
 * http://www.img.lx.it.pt/pcs2007/presentations/JurgenHere_Sound_Images.pdf

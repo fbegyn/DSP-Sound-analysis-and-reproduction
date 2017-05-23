@@ -1,7 +1,5 @@
 #!/usr/bin/python2
 from __future__ import division
-#from common import parabolic
-#from common import parabolic as parabolic
 from time import time
 import itertools
 # Numpy
@@ -17,7 +15,6 @@ from scipy.io import wavfile
 from scipy.signal import fftconvolve, kaiser, decimate, argrelmax, blackmanharris
 # Other files
 from functions import *
-from fft import *
 import operator
 
 class Signal:

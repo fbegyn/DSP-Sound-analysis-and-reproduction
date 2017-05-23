@@ -3,7 +3,6 @@
 # --- Own Libraries ---
 from functions import *
 from sign import *
-from fft import *
 # --- File with synthesise settings ---
 from SETTINGS import *
 # --- Numpy ---
@@ -13,6 +12,7 @@ import scipy.signal as sign
 # --- Matplotlib
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
+from tempfile import TemporaryFile
 
 # Synthesising a signal (by Francis Begyn and Laurens Scheldeman) """
 
@@ -33,7 +33,7 @@ if CUT_INPUT:
     inp.cut(CUT_INPUT_BEGIN, CUT_INPUT_END)
     print(inp)
     inp.write_file(OUTPUT_DIRECTORY + 'input.wav')
-print("\n    [DONE] Input file ready to get parameters")
+print("\n    [DONE] Input file ready to get PARAMETERS")
 # Look at spectrogram to define cut length
 # inp.spectrogram()
 # inp.plotfft()
@@ -41,7 +41,7 @@ inp.write_file(OUTPUT_DIRECTORY+'original.wav')
 
 
 ###############################################################################
-#                               Find parameters                               #
+#                               Find PARAMETERS                               #
 ###############################################################################
 print("\n  ---------- FINDING PARAMETERS ----------")
 # Adding kaiser window and creating (normalized) enveloped signal
@@ -53,13 +53,13 @@ print('\n        Frequency\t|  Amplitude')
 print('     -------------------+----------------')
 for i in range(0, len(FUND)):
     print('     '+str(FUND[i][0])+'\t|  '+str(FUND[i][1]))
-print("\n    [DONE] Parameters found, ready to synthesise")
+print("\n    [DONE] PARAMETERS found, ready to synthesise")
 
 ###############################################################################
 #                                 Synthesise                                  #
 ###############################################################################
 print("\n  ---------- SYNTHESISE ----------")
-# The parameters to synthesise our signal are:
+# The PARAMETERS to synthesise our signal are:
 #    * The fundamental frequencies: FUND
 #    * The envelope of the original signal: ENVELOPE
 
@@ -67,69 +67,73 @@ print("\n  ---------- SYNTHESISE ----------")
 # Compute an estimate of the power spectral density by dividing the data into
 # overlapping segments, computing a modified periodogram for each segment and
 # averaging the periodograms.
-f, Pwelch_spec = sign.welch(inp.signal, inp.get_fs(), scaling='spectrum')
-plt.semilogy(f, Pwelch_spec)
+FR, PWELCH_SPEC = sign.welch(inp.signal, inp.get_fs(), scaling='spectrum')
+plt.semilogy(FR, PWELCH_SPEC)
 
 # Change the length of envelope to match the new samplerate
 NEW_ENVELOPE = sign.resample(ENVELOPE, int(round(inp.get_dur()*NEW_FS)), window=None)
 
-signal = np.zeros(int(round((inp.get_len()*NEW_FS)*(1./inp.get_fs()))))
+# Save parameters to temporaryFile
+PARAMETERS = TemporaryFile()
+DUR = inp.get_dur()
+FS = inp.get_fs()
+LEN = inp.get_len()
+np.savez(PARAMETERS, fund=FUND, env=NEW_ENVELOPE, dur=DUR, fs=FS, len=LEN)
+
+PARAMETERS.seek(0) # Simulates closing and opening the file
+
+# Load parameters from TemporaryFile
+NPFILE = np.load(PARAMETERS)
+FUND = NPFILE['fund']
+NEW_ENVELOPE = NPFILE['env']
+INP_FS = NPFILE['fs']
+INP_DUR = NPFILE['dur']
+INP_LEN = NPFILE['len']
+
+# Synthesize the sound from the parameters
+SIGNAL = np.zeros(int(round((INP_LEN*NEW_FS)*(1./INP_FS))))
 for i in range(0, len(FUND)):
-    signal += coswav(FUND[i][0], NEW_FS, inp.get_dur())*FUND[i][1]
-    signal *= NEW_ENVELOPE
+    SIGNAL += coswav(FUND[i][0], NEW_FS, INP_DUR)*FUND[i][1]
+    SIGNAL *= NEW_ENVELOPE
 outp_base = Signal()
-outp_base.from_sound(signal, NEW_FS)
+outp_base.from_sound(SIGNAL, NEW_FS)
 outp_base.write_file(OUTPUT_DIRECTORY+'synth_base.wav')
-f, Pwelch_spec = sign.welch(outp_base.signal, NEW_FS, scaling='spectrum')
-plt.semilogy(f, Pwelch_spec)
-del signal
+FR, PWELCH_SPEC = sign.welch(outp_base.signal, NEW_FS, scaling='spectrum')
+plt.semilogy(FR, PWELCH_SPEC)
+del SIGNAL
 
+# Synthesize the sound with frequency multiplication
 for j in range(2, 5):
-    signal = np.zeros(int(round((inp.get_len()*NEW_FS)*(1./inp.get_fs()))))
+    SIGNAL = np.zeros(int(round((INP_LEN*NEW_FS)*(1./INP_FS))))
     for i in range(0, len(FUND)):
-        signal += coswav(FUND[i][0]*j, NEW_FS, inp.get_dur())*FUND[i][1]
-        signal *= NEW_ENVELOPE
+        SIGNAL += coswav(FUND[i][0]*j, NEW_FS, INP_DUR)*FUND[i][1]
+        SIGNAL *= NEW_ENVELOPE
     outp_freq = Signal()
-    outp_freq.from_sound(signal, NEW_FS)
+    outp_freq.from_sound(SIGNAL, NEW_FS)
     outp_freq.write_file(OUTPUT_DIRECTORY+'synth_freq'+str(j)+'.wav')
-    f, Pwelch_spec = sign.welch(outp_freq.signal, NEW_FS, scaling='spectrum')
-    plt.semilogy(f, Pwelch_spec)
-    del signal
-
-for j in range(2, 5):
-    signal = np.zeros(int(round((inp.get_len()*NEW_FS)*(1./inp.get_fs()))))
-    for i in range(0, len(FUND)):
-        signal += coswav(FUND[i][0], NEW_FS, inp.get_dur())*FUND[i][1]
-        signal *= NEW_ENVELOPE
-    outp_shape = Signal()
-    outp_shape.from_sound(signal, NEW_FS)
-    outp_shape.write_file(OUTPUT_DIRECTORY+'synth_freq'+str(j)+'.wav')
-    f, Pwelch_spec = sign.welch(outp_shape.signal, NEW_FS, scaling='spectrum')
-    plt.semilogy(f, Pwelch_spec)
-    del signal
+    f, PWELCH_SPEC = sign.welch(outp_freq.signal, NEW_FS, scaling='spectrum')
+    plt.semilogy(f, PWELCH_SPEC)
+    del SIGNAL
 
 plt.xlabel('frequency [Hz]')
 plt.ylabel('PSD')
 plt.grid()
 plt.show()
 
+# Synthesize the sound with different envelope shapes
+for j in range(2, 5):
+    SIGNAL = np.zeros(int(round((INP_LEN*NEW_FS)*(1./INP_FS))))
+    for i in range(0, len(FUND)):
+        SIGNAL += coswav(FUND[i][0], NEW_FS, INP_DUR)*FUND[i][1]
+        SIGNAL *= NEW_ENVELOPE
+    outp_shape = Signal()
+    outp_shape.from_sound(SIGNAL, NEW_FS)
+    outp_shape.write_file(OUTPUT_DIRECTORY+'synth_freq'+str(j)+'.wav')
+    f, PWELCH_SPEC = sign.welch(outp_shape.signal, NEW_FS, scaling='spectrum')
+    plt.semilogy(f, PWELCH_SPEC)
+    del SIGNAL
 
-fig = plt.figure()
-plt.plot(ENVELOPE)
-plt.show()
-
-
-#plt.plot(inp.signal*ENVELOPE)
-#plt.plot(signal)
-#plt.show()
-pltFig = plt.figure()
-pltGs = gridspec.GridSpec(2,1, height_ratios=[1,1])
-pltEnv = plt.subplot(pltGs[0])
-pltEnv.plot(inp.signal*ENVELOPE)
-pltEnv2 = plt.subplot(pltGs[1],sharex = pltEnv)
-pltEnv2.plot(outp_base.signal)
-plt.setp(pltEnv.get_xticklabels(),visible=False)
-yticks = pltEnv2.yaxis.get_major_ticks()
-yticks[-1].label1.set_visible(False)
-plt.subplots_adjust(hspace=.0)
+plt.xlabel('frequency [Hz]')
+plt.ylabel('PSD')
+plt.grid()
 plt.show()
