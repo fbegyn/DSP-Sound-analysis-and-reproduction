@@ -12,17 +12,17 @@ from scipy.fftpack import fft, ifft, fftshift, fftfreq
 ###############################################################################
 
 
-def wavread(filename):
-    # Return values:
-    # First element equals the sample rate
-    # Second element equals an array with all the samples
-    return wavfile.read(filename)
+#def wavread(filename):
+#    # Return values:
+#    # First element equals the sample rate
+#    # Second element equals an array with all the samples
+#    return wavfile.read(filename)
 
 
-def wavwrite(filename, fs, signaal):
-    # Writes a wav file, just like wavread reads a file
-    normalized = np.int16(signaal / max(np.fabs(signaal)) * 32767)
-    wavfile.write(filename, fs, normalized)
+#def wavwrite(filename, fs, signaal):
+#    # Writes a wav file, just like wavread reads a file
+#    normalized = np.int16(signaal / max(np.fabs(signaal)) * 32767)
+#    wavfile.write(filename, fs, normalized)
 
 ###############################################################################
 #                              Signal processing                              #

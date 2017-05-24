@@ -6,7 +6,7 @@
 ###############################################################################
 # File location
 INPUT_DIRECTORY = 'sampleSounds/'
-INPUT_FILENAME = 'krekel02.wav'
+INPUT_FILENAME = 'galop02.wav'
 
 # Pick a sample out of the input sound
 # Change CUT_INPUT to False to disable
@@ -30,7 +30,6 @@ AMPLITUDE_AMOUNT = 5
 #                                  Synthesise                                 #
 ###############################################################################
 # Change the sample rate
-# In the end we'll need 48000 sps
 NEW_FS = 48000
 
 # File location

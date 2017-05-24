@@ -9,12 +9,13 @@ from SETTINGS import *
 import numpy as np
 # --- Scipy ---
 import scipy.signal as sign
-# --- Matplotlib
+# --- Matplotlib ---
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
+# --- Other files ---
 from tempfile import TemporaryFile
 
-# Synthesising a signal (by Francis Begyn and Laurens Scheldeman) """
+""" Synthesising a signal (by Francis Begyn and Laurens Scheldeman) """
 
 ###############################################################################
 #                            Input of sample sound                            #
@@ -25,14 +26,19 @@ inp = Signal()
 # inp.from_file('sampleSounds/galop02.wav')
 inp.from_file(INPUT_DIRECTORY + INPUT_FILENAME)
 print(inp)
+inp.write_file(OUTPUT_DIRECTORY + 'input.wav')
 
-# Pick a sample out of the input sound (like 1 step of the gallop)
+# inp.plot()
+#inp.plotfft()
+# inp.spectrogram
+
+# Pick a sample out of the input sound (like 1 or more step of the gallop)
+# More than 1 will take the avarage of them, resulting in beter detail
 if CUT_INPUT:
     print("\n    Pick a sound out of the input file")
     # twice the sound, could be bigger, but faster to test
     inp.cut(CUT_INPUT_BEGIN, CUT_INPUT_END)
     print(inp)
-    inp.write_file(OUTPUT_DIRECTORY + 'input.wav')
 print("\n    [DONE] Input file ready to get PARAMETERS")
 # Look at spectrogram to define cut length
 # inp.spectrogram()
@@ -70,25 +76,25 @@ print("\n  ---------- SYNTHESISE ----------")
 FR, PWELCH_SPEC = sign.welch(inp.signal, inp.get_fs(), scaling='spectrum')
 plt.semilogy(FR, PWELCH_SPEC)
 
-# Change the length of envelope to match the new samplerate
-NEW_ENVELOPE = sign.resample(ENVELOPE, int(round(inp.get_dur()*NEW_FS)), window=None)
-
 # Save parameters to temporaryFile
 PARAMETERS = TemporaryFile()
-DUR = inp.get_dur()
 FS = inp.get_fs()
 LEN = inp.get_len()
-np.savez(PARAMETERS, fund=FUND, env=NEW_ENVELOPE, dur=DUR, fs=FS, len=LEN)
+np.savez(PARAMETERS, fund=FUND, env=ENVELOPE, fs=FS, len=LEN)
 
 PARAMETERS.seek(0) # Simulates closing and opening the file
 
 # Load parameters from TemporaryFile
 NPFILE = np.load(PARAMETERS)
 FUND = NPFILE['fund']
-NEW_ENVELOPE = NPFILE['env']
+ENVELOPE = NPFILE['env']
 INP_FS = NPFILE['fs']
-INP_DUR = NPFILE['dur']
 INP_LEN = NPFILE['len']
+
+# Change the length of envelope to match the new samplerate
+# 44k1sps -> 48ksps = upsampling => interpolation
+INP_DUR = INP_LEN*(1./INP_FS)
+NEW_ENVELOPE = sign.resample(ENVELOPE, int(round(INP_DUR*NEW_FS)), window=None)
 
 # Synthesize the sound from the parameters
 SIGNAL = np.zeros(int(round((INP_LEN*NEW_FS)*(1./INP_FS))))
@@ -128,7 +134,7 @@ for j in range(2, 5):
         SIGNAL *= NEW_ENVELOPE
     outp_shape = Signal()
     outp_shape.from_sound(SIGNAL, NEW_FS)
-    outp_shape.write_file(OUTPUT_DIRECTORY+'synth_freq'+str(j)+'.wav')
+    outp_shape.write_file(OUTPUT_DIRECTORY+'synth_env'+str(j)+'.wav')
     f, PWELCH_SPEC = sign.welch(outp_shape.signal, NEW_FS, scaling='spectrum')
     plt.semilogy(f, PWELCH_SPEC)
     del SIGNAL

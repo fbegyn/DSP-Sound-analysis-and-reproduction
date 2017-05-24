@@ -1,21 +1,24 @@
 #!/usr/bin/python2
+
+# --- Other files ---
 from __future__ import division
 from time import time
 import itertools
-# Numpy
+import operator
+# --- Own Libraries ---
+from functions import *
+# --- Numpy ---
 import numpy as np
 from numpy import argmax, mean, diff, copy, arange
 from numpy.fft import rfft
-# Matplotlib
+# --- Matplotlib ---
 from matplotlib import pyplot as plt
 from matplotlib.mlab import find
-# Scipy
+# --- Scipy ---
 from scipy import optimize
 from scipy.io import wavfile
 from scipy.signal import fftconvolve, kaiser, decimate, argrelmax, blackmanharris
-# Other files
-from functions import *
-import operator
+
 
 class Signal:
     norm_samplerate = 44100
