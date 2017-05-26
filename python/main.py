@@ -10,7 +10,7 @@ Voor Windows is er een .bat bestand bijgevoegd die de code automatisch zal uitvo
 Elk .py bestand bevat genoeg commentaar om duidelijk maken hoe de functies werken of wat de
 parameters voorstellen.
 Main.py - hoofdprogramma
-sign.py - signaal python klasse
+sign.py - zelf geschreven python klasse voor signalen
 functions.py - zelf geschreven handige functies
 SETTINGS.py - aanpasbare parameters voor volledig programma
 

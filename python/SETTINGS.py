@@ -12,7 +12,7 @@ INPUT_FILENAME = 'krekel01.wav'
 # Change CUT_INPUT to False to disable
 CUT_INPUT = True
 CUT_INPUT_BEGIN = 0.58
-CUT_INPUT_END = 3.58
+CUT_INPUT_END = 1.58
 
 ###############################################################################
 #                               Find parameters                               #
