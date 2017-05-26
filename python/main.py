@@ -1,21 +1,37 @@
 #!/usr/bin/python2
 
+"""
+Synthesising a signal (by Francis Begyn and Laurens Scheldeman)
+
+Om dit programma uit te voeren kan men ofwel 'python2 main.py' uitvoeren in de command prompt,
+ofwel het programma uitvoerbaar maken door 'chmod +x main.py' te doen (voor Linux).
+Voor Windows is er een .bat bestand bijgevoegd die de code automatisch zal uitvoeren.
+
+Elk .py bestand bevat genoeg commentaar om duidelijk maken hoe de functies werken of wat de
+parameters voorstellen.
+Main.py - hoofdprogramma
+sign.py - signaal python klasse
+functions.py - zelf geschreven handige functies
+SETTINGS.py - aanpasbare parameters voor volledig programma
+
+InputSounds bevat een verschillende input bestanden voor elk geluid, elk uniek.
+OutputSouds bevat gesynthetiseerde geluiden voor elk gekozen geluid.
+"""
+
 # --- Own Libraries ---
 from functions import *
-from sign import *
+from sign import *  # Import everting from the sign python class
 # --- File with synthesise settings ---
 from SETTINGS import *
 # --- Numpy ---
 import numpy as np
 # --- Scipy ---
-import scipy.signal as sign
+import scipy.signal as sig # Import scipy.signal as sign != python sign class
 # --- Matplotlib ---
 from matplotlib import pyplot as plt
 from matplotlib import gridspec
 # --- Other files ---
 from tempfile import TemporaryFile
-
-""" Synthesising a signal (by Francis Begyn and Laurens Scheldeman) """
 
 ###############################################################################
 #                            Input of sample sound                            #
@@ -87,7 +103,7 @@ print("\n  ---------- SYNTHESISE ----------")
 # averaging the periodograms. (the one here of the input signal is just)
 # to measure with the output, so we don't actualy use FR and PWELCH_SPEC
 # to synthesise the signal)
-FR, PWELCH_SPEC = sign.welch(inp.signal, inp.get_fs(), scaling='spectrum')
+FR, PWELCH_SPEC = sig.welch(inp.signal, inp.get_fs(), scaling='spectrum')
 plt.semilogy(FR, PWELCH_SPEC)
 
 # Save parameters to temporaryFile
@@ -108,7 +124,7 @@ INP_LEN = NPFILE['len']
 # Change the length of envelope to match the new samplerate
 # 44k1sps -> 48ksps = upsampling => interpolation
 INP_DUR = INP_LEN*(1./INP_FS)
-NEW_ENVELOPE = sign.resample(ENVELOPE, int(round(INP_DUR*NEW_FS)), window=None)
+NEW_ENVELOPE = sig.resample(ENVELOPE, int(round(INP_DUR*NEW_FS)), window=None)
 
 # Synthesize the sound from the parameters
 SIGNAL = np.zeros(int(round((INP_LEN*NEW_FS)*(1./INP_FS))))
@@ -119,7 +135,7 @@ outp_base = Signal()
 outp_base.from_sound(SIGNAL, NEW_FS)
 print('\n     Created '+OUTPUT_FILENAME+'_base.wav\n')
 outp_base.write_file(OUTPUT_DIRECTORY+OUTPUT_FILENAME+'_base.wav')
-FR, PWELCH_SPEC = sign.welch(outp_base.signal, NEW_FS, scaling='spectrum')
+FR, PWELCH_SPEC = sig.welch(outp_base.signal, NEW_FS, scaling='spectrum')
 plt.semilogy(FR, PWELCH_SPEC)
 del SIGNAL
 
@@ -135,7 +151,7 @@ for j in range(2, 5):
     outp_freq.from_sound(SIGNAL, NEW_FS)
     outp_freq.write_file(OUTPUT_DIRECTORY+OUTPUT_FILENAME+'_freq'+str(j)+'.wav')
     print('     Created '+OUTPUT_FILENAME+'_freq'+str(j)+'.wav')
-    f, PWELCH_SPEC = sign.welch(outp_freq.signal, NEW_FS, scaling='spectrum')
+    f, PWELCH_SPEC = sig.welch(outp_freq.signal, NEW_FS, scaling='spectrum')
     plt.semilogy(f, PWELCH_SPEC)
     del SIGNAL
 print('\n')
@@ -148,7 +164,7 @@ for j in range(2, 5):
     outp_freq.from_sound(SIGNAL, NEW_FS)
     outp_freq.write_file(OUTPUT_DIRECTORY+OUTPUT_FILENAME+'_freq1_'+str(j)+'.wav')
     print('     Created '+OUTPUT_FILENAME+'_freq1:'+str(j)+'.wav')
-    f, PWELCH_SPEC = sign.welch(outp_freq.signal, NEW_FS, scaling='spectrum')
+    f, PWELCH_SPEC = sig.welch(outp_freq.signal, NEW_FS, scaling='spectrum')
     plt.semilogy(f, PWELCH_SPEC)
     del SIGNAL
 
@@ -171,7 +187,7 @@ for j in range(2, 5):
     outp_shape.from_sound(SIGNAL, NEW_FS)
     outp_shape.write_file(OUTPUT_DIRECTORY+OUTPUT_FILENAME+'_env'+str(j)+'.wav')
     print('     Created '+OUTPUT_FILENAME+'_env'+str(j)+'.wav')
-    f, PWELCH_SPEC = sign.welch(outp_shape.signal, NEW_FS, scaling='spectrum')
+    f, PWELCH_SPEC = sig.welch(outp_shape.signal, NEW_FS, scaling='spectrum')
     plt.semilogy(f, PWELCH_SPEC)
     del SIGNAL
 

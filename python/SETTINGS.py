@@ -6,13 +6,13 @@
 ###############################################################################
 # File location
 INPUT_DIRECTORY = 'InputSounds/'
-INPUT_FILENAME = 'krekel01.wav'
+INPUT_FILENAME = 'thunder02.wav'
 
 # Pick a sample out of the input sound
 # Change CUT_INPUT to False to disable
 CUT_INPUT = True
 CUT_INPUT_BEGIN = 0.58
-CUT_INPUT_END = 1.58
+CUT_INPUT_END = 3.58
 
 ###############################################################################
 #                               Find parameters                               #
@@ -33,5 +33,5 @@ AMPLITUDE_AMOUNT = 5
 NEW_FS = 48000
 
 # File location
-OUTPUT_FILENAME = 'krekel'
+OUTPUT_FILENAME = 'Thunder'
 OUTPUT_DIRECTORY = 'OutputSounds/'
