@@ -6,7 +6,7 @@
 ###############################################################################
 # File location
 INPUT_DIRECTORY = 'InputSounds/'
-INPUT_FILENAME = 'krekel02.wav'
+INPUT_FILENAME = 'krekel01.wav'
 
 # Pick a sample out of the input sound
 # Change CUT_INPUT to False to disable
