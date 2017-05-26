@@ -60,7 +60,8 @@ ENVELOPE, WINDOW = inp.make_envelope(WINDOW_OFFSET, NOISE_THRESHOLD)
 # Finding fundamental frequencies out of Fourier Transform (using FFT)
 # Searches and returns a list with the AMPLITUDE_AMOUNT to frequencies with
 # FREQUENCY_AMOUNT harmonics. Tresholds set limits for frequency and amplitude
-FUND = inp.freq_from_fft(ENVELOPE, FFT_OFFSET, FREQUENCY_THRESHOLD, FREQUENCY_AMOUNT, AMPLITUDE_THRESHOLD, AMPLITUDE_AMOUNT)
+FUND = inp.freq_from_fft(ENVELOPE, FFT_OFFSET, FREQUENCY_THRESHOLD, \
+                    FREQUENCY_AMOUNT, AMPLITUDE_THRESHOLD, AMPLITUDE_AMOUNT)
 print('\n        Frequency\t|  Amplitude')
 print('     -------------------+----------------')
 for i in range(0, len(FUND)):

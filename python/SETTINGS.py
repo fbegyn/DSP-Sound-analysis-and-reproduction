@@ -5,7 +5,7 @@
 #                            Input of sample sound                            #
 ###############################################################################
 # File location
-INPUT_DIRECTORY = 'sampleSounds/'
+INPUT_DIRECTORY = 'InputSounds/'
 INPUT_FILENAME = 'krekel01.wav'
 
 # Pick a sample out of the input sound
@@ -34,4 +34,4 @@ NEW_FS = 48000
 
 # File location
 OUTPUT_FILENAME = 'krekel'
-OUTPUT_DIRECTORY = 'testOutputs/'
+OUTPUT_DIRECTORY = 'OutputSounds/'
